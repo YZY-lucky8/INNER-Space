@@ -1,0 +1,38 @@
+# 依赖
+node_modules/
+
+# 环境变量与密钥
+.env
+.env.*
+
+# 日志
+*.log
+npm-debug.log*
+
+# 构建产物
+dist/
+build/
+
+# 临时与输出目录
+temp/
+output/
+tmp/
+
+# 备份文件
+*.bak
+*.tmp
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Python 缓存
+__pycache__/
+*.pyc
