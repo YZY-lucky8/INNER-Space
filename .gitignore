@@ -1,0 +1,46 @@
+# 依赖
+node_modules/
+
+# 环境变量与密钥
+.env
+.env.*
+# 样例配置只含占位值，必须入库
+!.env.example
+!server/.env.example
+
+# 日志
+*.log
+npm-debug.log*
+
+# 构建产物
+dist/
+build/
+
+# 临时与输出目录
+temp/
+output/
+tmp/
+
+# 备份文件
+*.bak
+*.tmp
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 本地接口配置（含密钥，禁止入库）
+ai.local.js
+*.local.js
+src/ai.local.js
