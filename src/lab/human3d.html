@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>标准四象限坐标图 | INNERSCAPE 3D 实验室</title>
+<style>
+  :root{
+    --ink:#061410; --fg:#eafff6; --muted:#8fb8a5; --dim:#7c9c8c;
+    --accent:#5fdcab; --gold:#e8cf92; --stroke:rgba(255,255,255,.11);
+    --stroke2:rgba(255,255,255,.20); --navh:52px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--ink);color:var(--fg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  body{background:radial-gradient(120% 90% at 50% 40%,#0d2a1f 0%,#061410 62%,#030c08 100%)}
+  #scene{position:fixed;inset:0;display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+  #scene.drag{cursor:grabbing}
+  .vignette{position:fixed;inset:0;pointer-events:none;z-index:2;
+    background:radial-gradient(120% 90% at 50% 46%,rgba(0,0,0,0) 42%,rgba(3,12,8,.64) 100%)}
+
+  #topbar{position:fixed;top:0;left:0;right:0;height:var(--navh);z-index:20;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 14px;
+    background:linear-gradient(180deg,rgba(6,20,16,.92),rgba(6,20,16,.30));
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(255,255,255,.06)}
+  .brand{display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:620;white-space:nowrap}
+  .brand i{width:8px;height:8px;border-radius:50%;background:var(--accent);
+    box-shadow:0 0 12px rgba(95,220,171,.9);display:block}
+  .brand em{font-style:normal;color:var(--dim);font-size:10px;letter-spacing:.18em}
+  .top-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .btn{appearance:none;border:1px solid var(--stroke);background:rgba(255,255,255,.06);color:var(--fg);
+    font-family:inherit;font-size:12px;padding:6px 11px;border-radius:999px;cursor:pointer;
+    text-decoration:none;transition:.16s;white-space:nowrap;line-height:1.25}
+  .btn:hover{background:rgba(255,255,255,.13);border-color:var(--stroke2)}
+  .btn.on{background:rgba(95,220,171,.18);border-color:rgba(95,220,171,.62);color:#c9ffe8}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  #info{position:fixed;left:16px;top:calc(var(--navh) + 16px);z-index:12;max-width:310px;pointer-events:none}
+  #info h1{margin:0;font-size:22px;line-height:1.3;font-weight:650;letter-spacing:-.01em;
+    font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",Georgia,serif}
+  #info h1 span{color:var(--accent)}
+  #info p{margin:9px 0 0;font-size:12px;line-height:1.72;color:var(--muted)}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:12px;font-size:11px;color:var(--muted)}
+  .legend b{display:inline-flex;align-items:center;gap:5px;font-weight:500}
+  .legend i{width:7px;height:7px;border-radius:50%;display:block}
+
+  #badge{position:fixed;right:14px;top:calc(var(--navh) + 14px);z-index:12;
+    padding:7px 11px;border-radius:999px;font-size:11px;color:var(--muted);
+    border:1px solid var(--stroke2);background:rgba(6,20,16,.72);
+    -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+  #badge.demo{color:var(--gold);border-color:rgba(232,207,146,.42)}
+  #badge a{color:var(--accent);text-decoration:none;margin-left:6px}
+
+  /* 4 个象限浮标：每帧按 3D 锚点投影到屏幕 */
+  #web-labels{position:fixed;inset:0;z-index:10;pointer-events:none}
+  .web-label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;
+    font-size:12px;font-weight:600;letter-spacing:.06em;padding:4px 10px;border-radius:999px;
+    background:rgba(6,20,16,.58);border:1px solid rgba(255,255,255,.12);
+    -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+    transition:opacity .2s;text-shadow:0 1px 8px rgba(2,12,8,.9)}
+
+  #focus{position:fixed;right:14px;bottom:16px;z-index:14;width:272px;max-width:calc(100vw - 28px);
+    padding:14px 15px;border-radius:14px;border:1px solid var(--stroke2);
+    background:rgba(6,20,16,.82);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+    box-shadow:0 18px 48px rgba(0,0,0,.44);transition:opacity .2s,transform .2s}
+  #focus.off{opacity:0;transform:translateY(8px);pointer-events:none}
+  #focus h3{margin:0;font-size:16px;font-weight:650}
+  #focus .sub{font-size:11px;color:var(--dim);margin-top:3px}
+  #focus ul{list-style:none;margin:11px 0 0;padding:0;display:grid;gap:8px}
+  #focus li{font-size:11.5px;color:var(--muted);line-height:1.5}
+  #focus li b{display:block;font-weight:600;color:var(--fg);font-size:12px}
+  #focus li span.q{display:block;color:var(--dim);font-size:10.5px;margin-top:1px}
+  #focus .tip{margin-top:11px;padding-top:10px;border-top:1px solid var(--stroke);
+    font-size:11px;line-height:1.6;color:var(--dim)}
+
+  #hint{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:12;
+    font-size:11px;color:var(--dim);white-space:nowrap;pointer-events:none;
+    text-shadow:0 1px 8px rgba(2,12,8,.9)}
+  #toast{position:fixed;left:50%;top:calc(var(--navh) + 18px);transform:translateX(-50%);z-index:30;
+    padding:8px 14px;border-radius:999px;font-size:12px;color:#06231a;background:var(--accent);
+    opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+  #toast.on{opacity:1}
+
+  #camwrap{position:fixed;right:14px;top:calc(var(--navh) + 52px);z-index:13;width:132px;
+    border-radius:10px;overflow:hidden;border:1px solid var(--stroke2);opacity:.72}
+  #camwrap.off{display:none}
+  #camwrap video,#camwrap canvas{display:block;width:132px;height:99px;object-fit:cover}
+  #camwrap canvas{position:absolute;left:0;top:0}
+
+  #fallback{position:fixed;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:80px 20px 40px}
+  #fallback.on{display:flex}
+  .fb-wrap{width:min(520px,100%);text-align:center}
+  .fb-bars{display:flex;align-items:flex-end;justify-content:center;gap:22px;height:230px;
+    padding-bottom:16px;border-bottom:1px solid var(--stroke2)}
+  .fb-col{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%}
+  .fb-col i{display:block;width:38px;border-radius:5px 5px 2px 2px}
+  .fb-col span{font-size:11px;color:var(--muted);margin-top:6px}
+  .fb-wrap p{font-size:12px;color:var(--dim);line-height:1.7;margin-top:16px}
+
+  @media (max-width:720px){
+    #info{max-width:210px}#info h1{font-size:17px}#info p{font-size:11px}
+    .legend{display:none}#focus{width:200px;padding:11px 12px}
+    #hint{bottom:8px;font-size:10px}.brand em{display:none}
+  }
+  @media (max-width:460px){
+    #info{display:none}#badge{top:auto;bottom:52px;right:10px}
+    #focus{right:10px;bottom:10px;width:178px}#camwrap{width:96px}
+    #camwrap video,#camwrap canvas{width:96px;height:72px}
+    .web-label{font-size:10px;padding:3px 7px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div class="vignette"></div>
+<div id="web-labels"></div>
+
+<div id="topbar">
+  <div class="brand"><i></i>标准四象限坐标图<em>HUMAN 3.0 · 3D LAB</em></div>
+  <div class="top-right">
+    <a class="btn" href="../index.html#/map" title="标 12 格自评，读数会实时拼进坐标图">标 12 格</a>
+    <a class="btn" href="hand3d.html" title="回到卡点粒子云实验室">粒子云实验室</a>
+    <a class="btn" href="hand3d.html?mode=web" title="在同一个实验室里切换到统计图模式">并入实验室</a>
+    <button class="btn on" type="button" id="btn-mode">统计图</button>
+    <button class="btn" type="button" id="btn-spin">暂停旋转</button>
+    <button class="btn" type="button" id="btn-reset">复位</button>
+    <button class="btn" type="button" id="btn-hand" hidden>手势</button>
+  </div>
+</div>
+
+<div id="info">
+  <h1>把你标的 12 格，<span>放进坐标里</span></h1>
+  <p>横轴 个人 ↔ 集体，纵轴 外在 ↔ 内在；象限 I 精神 / II 心智 / III 身体 / IV 使命。每一格读数落成一个点，折线与面积都由粒子拼成；红色是拖住你的那条链，暖金是能借力的那条。这是自评坐标，不是测评。</p>
+  <div class="legend" id="legend"></div>
+</div>
+
+<div id="badge">读取本机坐标…</div>
+<div id="camwrap" class="off"><video id="cam" playsinline muted></video><canvas id="camsk"></canvas></div>
+
+<div id="focus" class="off">
+  <h3 id="fc-title">—</h3>
+  <div class="sub" id="fc-sub"></div>
+  <ul id="fc-list"></ul>
+  <div class="tip" id="fc-tip"></div>
+</div>
+
+<div id="hint">横轴 个人↔集体 · 纵轴 外在↔内在 · 点某一块聚焦 · 滚轮 / 捏合缩放 · 手势：掌心转 / 食指指</div>
+<div id="toast"></div>
+
+<div id="fallback"><div class="fb-wrap">
+  <div class="fb-bars" id="fb-bars"></div>
+  <p>这台设备没能打开 WebGL，改用平面视图。坐标数据没有丢失，回主站仍能正常使用。</p>
+</div></div>
+
+<script src="vendor/three.min.js"></script>
+<script src="../human3.js"></script>
+<script src="web3d.js"></script>
+<script>
+/* =========================================================
+   标准四象限坐标图（宿主）
+   ---------------------------------------------------------
+   · 渲染器在 web3d.js；这里只负责相机、交互、HUD、手势与数据通道
+   · 数据：主站 postMessage 优先 → 本机 localStorage → 示例坐标
+   · 普通 script + 本地 three.min.js，file:// 双击可用；手势为 http 下的可选增强
+   ========================================================= */
+(function () {
+  'use strict';
+
+  var W = window.INNERSCAPE_WEB;
+  var Q = W.Q, QL = W.LABELS, HEX = W.COLORS;
+  var EMBED = /[?&]embed=1/.test(location.search);
+  var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $ = function (id) { return document.getElementById(id); };
+  function say(msg) {
+    var t = $('toast'); if (!t) return;
+    t.textContent = msg; t.className = 'on';
+    setTimeout(function () { t.className = ''; }, 1800);
+  }
+  function baseDist() {
+    var w = window.innerWidth;
+    if (w < 420) return 11.4;
+    if (w < 620) return 9.8;
+    return EMBED ? 8.3 : 8.9;
+  }
+  var cam = { theta: 0.62, phi: 0.94, dist: baseDist() };
+  var goal = { theta: 0.62, phi: 0.94, dist: baseDist() };
+  var target = new THREE.Vector3(0, 0.42, 0);
+  var renderer, scene, camera, web;
+  var raf = 0, running = false, spin = !REDUCED, dragging = false, focused = null;
+  var ptr = { x: 0, y: 0, px: 0, py: 0 };
+  var handMode = false, landmarker = null, camStream = null, lastVideo = -1, handCool = 0;
+  var labelEls = {};
+  var lastW = 0, lastH = 0;
+
+  /* ---------- HUD ---------- */
+  function paintBadge(m) {
+    var b = $('badge'); if (!b) return;
+    if (m && m.demo) {
+      b.className = 'demo';
+      b.innerHTML = '示例坐标 · 还没标过 12 格 <a href="../index.html#/map" target="_top">去标 →</a>';
+    } else {
+      b.className = ''; b.textContent = '我的坐标 · 只存在这台设备';
+    }
+  }
+  function paintLegend() {
+    var el = $('legend'); if (!el) return;
+    var s = '';
+    for (var i = 0; i < Q.length; i++) {
+      s += '<b><i style="background:#' + HEX[Q[i]].toString(16).padStart(6, '0') + '"></i>' + QL[Q[i]] + '</b>';
+    }
+    el.innerHTML = s;
+    var box = $('web-labels'); if (!box) return;
+    box.innerHTML = '';
+    for (i = 0; i < Q.length; i++) {
+      var d = document.createElement('div');
+      d.className = 'web-label'; d.textContent = QL[Q[i]];
+      d.style.color = '#' + HEX[Q[i]].toString(16).padStart(6, '0');
+      box.appendChild(d); labelEls[Q[i]] = d;
+    }
+  }
+  function paintFocus(info) {
+    var el = $('focus'); if (!el) return;
+    if (!info) { el.className = 'off'; return; }
+    $('fc-title').textContent = info.title;
+    $('fc-title').style.color = info.color;
+    $('fc-sub').textContent = info.sub;
+    var s = '';
+    for (var i = 0; i < info.items.length; i++) {
+      var it = info.items[i];
+      s += '<li><b>' + it.label + ' · ' + it.text + '</b>' +
+        (it.prompt ? '<span class="q">' + it.prompt + '</span>' : '') + '</li>';
+    }
+    $('fc-list').innerHTML = s;
+    $('fc-tip').textContent = info.tip + (info.demo ? '（当前是示例坐标）' : '');
+    el.className = '';
+  }
+
+  /* ---------- 场景 ---------- */
+  function init3D() {
+    var canvas = $('scene');
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true,
+        powerPreference: 'high-performance' });
+    } catch (e) { return false; }
+    if (!renderer || !renderer.getContext()) return false;
+    var iw = Math.max(1, Number(window.innerWidth) || 1);
+    var ih = Math.max(1, Number(window.innerHeight) || 1);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
+    renderer.setSize(iw, ih, false);
+    renderer.setClearColor(0x000000, 0);
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(48, Math.max(0.35, Math.min(4.5, iw / ih)), 0.1, 140);
+    web = W.create({
+      THREE: THREE, scene: scene, camera: camera,
+      lowEnd: window.innerWidth < 760,
+      onFocus: paintFocus
+    });
+    web.setPixel(Math.min(window.devicePixelRatio || 1, 1.6));
+    return true;
+  }
+  function applyFallback(m) {
+    var wrap = $('fallback'); if (!wrap) return;
+    wrap.className = 'on';
+    var box = $('fb-bars'); if (!box) return;
+    var g = (m && m.grid) || W.demoModel().grid, s = '';
+    for (var i = 0; i < Q.length; i++) {
+      var q = Q[i], total = 0;
+      for (var j = 0; j < W.T.length; j++) {
+        var v = g[q] && g[q][W.T[j]];
+        total += (v === 1 || v === 2 || v === 3) ? v : 0;
+      }
+      s += '<div class="fb-col"><i style="height:' + (26 + total * 17) + 'px;background:#' +
+        HEX[q].toString(16).padStart(6, '0') + '"></i><span>' + QL[q] + '</span></div>';
+    }
+    box.innerHTML = s;
+  }
+  function acceptModel(m) {
+    if (!m || !m.grid) return false;
+    if (web) web.applyData(m);
+    paintBadge(m);
+    return true;
+  }
+
+  /* ---------- 相机与交互 ---------- */
+  function focusOn(q, fromUser) {
+    if (Q.indexOf(q) < 0) { resetView(); return; }
+    focused = q;
+    if (web) web.focus(q);
+    goal.dist = Math.max(5.6, baseDist() - 1.6);
+    if (fromUser) say('聚焦 · ' + QL[q]);
+  }
+  function resetView() {
+    focused = null;
+    if (web) web.clearFocus();
+    goal.theta = 0.62; goal.phi = 0.94; goal.dist = baseDist();
+    var el = $('focus'); if (el) el.className = 'off';
+  }
+  function toggleSpin() {
+    spin = !spin;
+    var b = $('btn-spin'); if (b) b.textContent = spin ? '暂停旋转' : '继续旋转';
+    say(spin ? '开始缓慢旋转' : '已暂停旋转');
+  }
+  function onResize(force) {
+    if (!renderer) return;
+    var w = Math.max(1, Number(window.innerWidth) || 1);
+    var h = Math.max(1, Number(window.innerHeight) || 1);
+    if (!force && w === lastW && h === lastH) return;
+    lastW = w; lastH = h;
+    /* 窄屏切换 / 旋转后都要按新尺寸重算距离，聚焦态用「基准 - 1.6」而不是沿用桌面值 */
+    goal.dist = focused ? Math.max(5.6, baseDist() - 1.6) : baseDist();
+    /* 竖屏时把整张网等比缩小，保证四个象限都进画面，而不是被左右裁掉 */
+    if (web) web.group.scale.setScalar(Math.min(1, Math.max(0.5, (w / h) / 0.85)));
+    camera.aspect = Math.max(0.35, Math.min(4.5, w / h));
+    camera.updateProjectionMatrix();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
+    renderer.setSize(w, h, false);
+    if (web) web.setPixel(Math.min(window.devicePixelRatio || 1, 1.6));
+    /* 后台标签页 rAF 停帧时，改尺寸后立刻补一帧，避免回到前台是空缓冲 */
+    if (scene && camera) { try { renderer.render(scene, camera); } catch (e) { /* 忽略 */ } }
+  }
+  function bindInteraction() {
+    var c = $('scene');
+    function down(e) {
+      dragging = true; c.className = 'drag';
+      var p = e.touches ? e.touches[0] : e;
+      ptr.px = ptr.x = p.clientX; ptr.py = ptr.y = p.clientY;
+    }
+    function move(e) {
+      var p = e.touches ? e.touches[0] : e;
+      ptr.x = p.clientX; ptr.y = p.clientY;
+      if (dragging) {
+        goal.theta -= (ptr.x - ptr.px) * 0.006;
+        goal.phi = Math.max(0.20, Math.min(1.44, goal.phi - (ptr.y - ptr.py) * 0.005));
+        ptr.px = ptr.x; ptr.py = ptr.y;
+      }
+      if (e.cancelable && dragging) e.preventDefault();
+    }
+    function up() { dragging = false; c.className = ''; }
+    c.addEventListener('mousedown', down, false);
+    window.addEventListener('mousemove', move, false);
+    window.addEventListener('mouseup', up, false);
+    c.addEventListener('touchstart', down, { passive: true });
+    c.addEventListener('touchmove', move, { passive: false });
+    c.addEventListener('touchend', up, false);
+    c.addEventListener('wheel', function (e) {
+      goal.dist = Math.max(4.6, Math.min(16, goal.dist + (e.deltaY > 0 ? 0.55 : -0.55)));
+      e.preventDefault();
+    }, { passive: false });
+    c.addEventListener('click', function (e) {
+      if (!web) return;
+      var q = web.pick(e.clientX, e.clientY, window.innerWidth, window.innerHeight);
+      if (q) focusOn(q, true); else if (focused) resetView();
+    }, false);
+    window.addEventListener('keydown', function (e) {
+      if (e.key >= '1' && e.key <= '4') focusOn(Q[Number(e.key) - 1], true);
+      else if (e.key === '0' || e.key === 'Escape') resetView();
+      else if (e.key === ' ') { toggleSpin(); e.preventDefault(); }
+    }, false);
+    window.addEventListener('resize', function () { onResize(false); }, false);
+    if (window.ResizeObserver) {
+      try { new ResizeObserver(function () { onResize(true); }).observe(document.documentElement); } catch (e) { /* 忽略 */ }
+    }
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) stop(); else { running = false; start(); }
+    }, false);
+  }
+
+  /* ---------- 手势（http 下可选增强，与粒子云实验室同一套本地模型） ---------- */
+  function initGesture() {
+    if (location.protocol === 'file:') return;   /* file:// 静默跳过手势，鼠标拖拽照常 */
+    var btn = $('btn-hand'); if (btn) btn.disabled = true;
+    import('./vendor/vision_bundle.mjs').then(function (vision) {
+      return vision.FilesetResolver.forVisionTasks('./vendor/wasm').then(function (fs) {
+        return vision.HandLandmarker.createFromOptions(fs, {
+          baseOptions: { modelAssetPath: './vendor/models/hand_landmarker.task', delegate: 'GPU' },
+          runningMode: 'VIDEO', numHands: 1
+        });
+      }).then(function (lm) {
+        landmarker = lm;
+        if (btn) { btn.disabled = false; btn.hidden = false; }
+      });
+    }).catch(function () {
+      if (btn) btn.hidden = true;   /* 静默降级：鼠标与触控仍可完整操作 */
+    });
+  }
+  function toggleHand() {
+    if (!landmarker) { initGesture(); return; }
+    var btn = $('btn-hand');
+    if (handMode) {
+      handMode = false;
+      if (camStream) { camStream.getTracks().forEach(function (t) { t.stop(); }); camStream = null; }
+      $('camwrap').className = 'off';
+      if (btn) { btn.className = 'btn'; btn.textContent = '手势'; }
+      say('已关闭摄像头');
+      return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { say('这台设备没有可用的摄像头'); return; }
+    navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false }).then(function (s) {
+      camStream = s;
+      var v = $('cam'); v.srcObject = s; v.play();
+      $('camwrap').className = '';
+      handMode = true;
+      if (btn) { btn.className = 'btn on'; btn.textContent = '手势 · 开'; }
+      say('掌心转视角 · 食指指向某一块 · 拇指食指开合缩放 · 捏合复位');
+    }).catch(function () { say('没能打开摄像头；画面只在本机处理'); });
+  }
+  function readHand(now) {
+    if (!handMode || !landmarker) return;
+    var v = $('cam');
+    if (!v || v.readyState < 2 || !v.videoWidth || v.currentTime === lastVideo) return;
+    lastVideo = v.currentTime;
+    var res;
+    try { res = landmarker.detectForVideo(v, now); } catch (e) { return; }
+    var lm = res && res.landmarks && res.landmarks[0];
+    if (!lm || !lm[0] || !lm[9] || !lm[4] || !lm[8]) return;
+    /* 掌心左右 → 转视角 */
+    var cx = 1 - (lm[0].x + lm[9].x) / 2;
+    goal.theta = 0.62 + (cx - 0.5) * 2.6;
+    var palmW = Math.hypot(lm[5].x - lm[17].x, lm[5].y - lm[17].y) || 0.12;
+    var pinch = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) / palmW;
+    /* 拇指食指开合 → 缩放 */
+    goal.dist = Math.max(4.8, Math.min(15, baseDist() - (pinch - 0.7) * 3.4));
+    /* 只伸食指 → 指尖所指的象限聚焦 */
+    var straight = function (tip, pip) {
+      return Math.hypot(lm[tip].x - lm[0].x, lm[tip].y - lm[0].y) >
+        Math.hypot(lm[pip].x - lm[0].x, lm[pip].y - lm[0].y) * 1.16;
+    };
+    var pointing = straight(8, 6) && !straight(12, 10) && !straight(16, 14) && !straight(20, 18);
+    if (pointing && web) {
+      var q = web.pick((1 - lm[8].x) * window.innerWidth, lm[8].y * window.innerHeight,
+        window.innerWidth, window.innerHeight);
+      if (q && q !== focused && now - handCool > 600) { handCool = now; focusOn(q, true); }
+    }
+    /* 捏合 → 复位 */
+    if (pinch < 0.42 && focused && now - handCool > 600) { handCool = now; resetView(); }
+    drawSkeleton(lm);
+  }
+  var HAND_CONN = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
+    [9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+  function drawSkeleton(lm) {
+    var cv = $('camsk'), v = $('cam');
+    if (!cv || !v.videoWidth) return;
+    if (cv.width !== v.videoWidth) { cv.width = v.videoWidth; cv.height = v.videoHeight; }
+    var ctx = cv.getContext('2d');
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    var Wd = cv.width, Hd = cv.height;
+    ctx.lineWidth = Math.max(2, Wd / 220); ctx.strokeStyle = 'rgba(95,220,171,.8)';
+    ctx.beginPath();
+    for (var i = 0; i < HAND_CONN.length; i++) {
+      var a = lm[HAND_CONN[i][0]], b = lm[HAND_CONN[i][1]];
+      ctx.moveTo(a.x * Wd, a.y * Hd); ctx.lineTo(b.x * Wd, b.y * Hd);
+    }
+    ctx.stroke();
+  }
+
+  /* ---------- 渲染循环 ---------- */
+  function updateLabels() {
+    if (!web) return;
+    var arr = web.labelAnchors(window.innerWidth, window.innerHeight);
+    for (var i = 0; i < arr.length; i++) {
+      var a = arr[i], el = labelEls[a.q];
+      if (!el) continue;
+      el.style.left = a.x.toFixed(1) + 'px';
+      el.style.top = a.y.toFixed(1) + 'px';
+      el.style.opacity = a.visible ? (focused && focused !== a.q ? '.28' : '.92') : '0';
+    }
+  }
+  function frame(now) {
+    if (!running) return;
+    raf = requestAnimationFrame(frame);
+    var dt = 0.016, t = now * 0.001;
+    onResize(false);
+    readHand(now);
+    if (spin && !dragging && !handMode) goal.theta += dt * 0.070;
+    cam.theta += (goal.theta - cam.theta) * 0.075;
+    cam.phi += (goal.phi - cam.phi) * 0.075;
+    cam.dist += (goal.dist - cam.dist) * 0.075;
+    camera.position.set(
+      target.x + cam.dist * Math.sin(cam.phi) * Math.sin(cam.theta),
+      target.y + cam.dist * Math.cos(cam.phi),
+      target.z + cam.dist * Math.sin(cam.phi) * Math.cos(cam.theta)
+    );
+    camera.lookAt(target);
+    /* v10：图纸朝向由 web3d.js 的 billboard 每帧接管，宿主不再设置 rotation，
+       否则会覆盖 quaternion，标准统计图的刻度与轴名会被转歪。 */
+    web.update(now, dt, 0.12 + Math.sin(t * 0.7) * 0.10);
+    renderer.render(scene, camera);
+    updateLabels();
+  }
+  function start() { if (running || !renderer) return; running = true; raf = requestAnimationFrame(frame); }
+  function stop() { running = false; if (raf) cancelAnimationFrame(raf); raf = 0; }
+
+  /* ---------- 数据通道 ---------- */
+  window.addEventListener('message', function (ev) {
+    var m = ev && ev.data;
+    if (!m || typeof m !== 'object') return;
+    if (m.type === 'h3:data') acceptModel(m.payload);
+    else if (m.type === 'h3:cmd') {
+      if (m.cmd === 'reset') resetView();
+      else if (m.cmd === 'spin') toggleSpin();
+      else if (m.cmd === 'focus' && Q.indexOf(m.q) >= 0) focusOn(m.q, false);
+      else if (m.cmd === 'data') acceptModel(m.payload);
+    }
+  }, false);
+
+  /* ---------- 启动 ---------- */
+  function boot() {
+    var ok3d = false;
+    try { ok3d = init3D(); } catch (e) { ok3d = false; }
+    if (!ok3d) {
+      $('scene').style.display = 'none';
+      $('badge').textContent = 'WebGL 不可用 · 平面视图';
+    }
+    paintLegend();
+    var m = W.localModel() || W.demoModel();
+    acceptModel(m);
+    if (!ok3d) applyFallback(m);
+    if (ok3d) { onResize(true); bindInteraction(); web.update(performance.now(), 0.016, 0); start(); }
+    if (window.parent !== window) {
+      try { window.parent.postMessage({ type: 'h3:request-data' }, '*'); } catch (e) { /* 忽略 */ }
+      setTimeout(function () { try { window.parent.postMessage({ type: 'h3:request-data' }, '*'); } catch (e) {} }, 700);
+    }
+    if (EMBED) {
+      $('topbar').style.display = 'none';
+      $('info').style.display = 'none';
+      $('hint').style.bottom = '8px';
+    } else {
+      $('btn-hand').hidden = false;
+      initGesture();
+    }
+    $('btn-spin').addEventListener('click', toggleSpin, false);
+    $('btn-reset').addEventListener('click', function () { resetView(); say('已复位'); }, false);
+    $('btn-hand').addEventListener('click', toggleHand, false);
+    $('btn-mode').addEventListener('click', function () { say('当前就是标准四象限统计图；点「并入实验室」可在粒子云里切换'); }, false);
+    if (REDUCED) { var bs = $('btn-spin'); if (bs) bs.textContent = '继续旋转'; }
+  }
+
+  window.__H3_STATUS = function () {
+    return {
+      dist: cam.dist, goalDist: goal.dist, phi: cam.phi, theta: cam.theta,
+      w: window.innerWidth, h: window.innerHeight,
+      aspect: camera ? camera.aspect : null,
+      cw: renderer && renderer.domElement ? renderer.domElement.width : 0,
+      ch: renderer && renderer.domElement ? renderer.domElement.height : 0,
+      focused: focused, running: running,
+      demo: web ? web.status().demo : null,
+      web: web ? web.status() : null,
+      hand: handMode
+    };
+  };
+  window.__H3_FOCUS = function (q) { focusOn(q, false); };
+  window.__H3_DATA = function (m) { return acceptModel(m); };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, false);
+  else boot();
+})();
+</script>
+</body>
+</html>
