@@ -423,19 +423,6 @@ p{color:var(--text-2);font-size:14.5px;line-height:1.8}
 
 .footer{margin-top:var(--sp-6);padding-top:18px;border-top:1px solid var(--rule);
   font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--dim);line-height:2}
-.lab-entry{
-  border:1px solid rgba(95,220,171,.34);border-radius:var(--r);
-  background:linear-gradient(100deg,rgba(95,220,171,.13),rgba(95,220,171,.02) 54%,transparent);
-  gap:20px;padding:22px;
-}
-.lab-entry .lab-entry-t{font-family:var(--font-display);font-size:20px;letter-spacing:-.02em}
-.lab-entry .lab-entry-go{border-radius:var(--r-sm);
-  background:linear-gradient(135deg,var(--accent-2),var(--accent));color:#06231a;
-  font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;padding:10px 16px}
-.lab-entry:hover .lab-entry-go{transform:translateX(4px);box-shadow:0 8px 22px rgba(95,220,171,.32)}
-.lab-entry .lab-orbit{border-color:rgba(95,220,171,.24);border-radius:50%}
-.lab-entry .lab-orbit::after{border-color:rgba(95,220,171,.18)}
-
 /* ---------- 9. 情绪轮播 ---------- */
 .mood{margin-top:var(--sp-6)}
 .mood-head h2{font-family:var(--font-display);font-size:clamp(26px,3vw,38px);letter-spacing:-.03em}
@@ -1068,16 +1055,28 @@ body.anim-ok .reveal.in:nth-of-type(4){transition-delay:240ms}
   font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",Georgia,serif;color:var(--text)}
 .h3-hero .hero-sub{max-width:720px;font-size:13.5px;line-height:1.8;color:var(--text-2);
   text-shadow:0 1px 8px rgba(2,12,8,.7)}
-.h3-stage{position:relative;margin-top:20px;border-radius:16px;overflow:hidden;
+.h3-stage{position:relative;margin-top:20px;border-radius:16px;padding:18px 14px 10px;overflow:hidden;
   border:1px solid rgba(255,255,255,.20);background:rgba(4,18,13,.55);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 24px 60px rgba(0,12,8,.45)}
-.h3-stage iframe{position:relative;z-index:1;display:block;width:100%;height:430px;border:0;background:transparent}
-.h3-stage-fallback{position:absolute;inset:0;z-index:0;display:grid;place-items:center;
-  font-size:12px;color:var(--dim);pointer-events:none}
-.h3-stage-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+.h3-stage-bar{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;
   margin-top:12px}
-.h3-stage-bar>div{display:flex;gap:8px;flex-wrap:wrap}
-.h3-stage-bar .btn{font-size:12px;padding:7px 12px}
+/* 四象限坐标统计图本体：一张纯 SVG，宽度自适应，高度按 viewBox 等比缩放 */
+svg.h3q{display:block;width:100%;max-width:560px;height:auto;margin:0 auto}
+.h3q-bg{fill:rgba(191,230,211,.03)}
+.h3q-bg.hot{fill:rgba(95,220,171,.11)}
+.h3q-name{font-family:var(--font-display);font-size:15.5px;fill:rgba(233,247,240,.94)}
+.h3q-sub{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.04em;fill:rgba(191,230,211,.56)}
+.h3q-g{stroke:rgba(191,230,211,.13);stroke-width:1}
+.h3q-g.major{stroke:rgba(191,230,211,.36)}
+.h3q-ar{fill:rgba(191,230,211,.62)}
+.h3q-tk{font-family:var(--font-mono);font-size:9.5px;fill:rgba(191,230,211,.5)}
+.h3q-ln{fill:none;stroke-width:1.4;stroke-dasharray:3 4;opacity:.72}
+.h3q-pt{r:5;stroke:rgba(6,20,16,.85);stroke-width:1;transition:r .16s ease}
+.h3q-pt.empty{fill-opacity:.14;stroke-dasharray:2 2}
+.h3q-ln.q0{stroke:#9ff0ce} .h3q-pt.q0{fill:#9ff0ce}
+.h3q-ln.q1{stroke:#7fd8c0} .h3q-pt.q1{fill:#7fd8c0}
+.h3q-ln.q2{stroke:#b9e6ff} .h3q-pt.q2{fill:#b9e6ff}
+.h3q-ln.q3{stroke:#e8cf92} .h3q-pt.q3{fill:#e8cf92}
 
 /* 罗盘：四条长度条，把 4 个象限读数画成体量而不是分数 */
 .h3-compass{position:relative;width:216px;height:216px;margin:18px auto 6px}
@@ -1192,7 +1191,6 @@ body.anim-ok .reveal.in:nth-of-type(4){transition-delay:240ms}
 @media (max-width:760px){
   .h3-hero{padding:20px 18px}
   .h3-hero h1{font-size:27px}
-  .h3-stage iframe{height:330px}
   .h3-grid,.h3-report-main{grid-template-columns:1fr}
   .h3-behavior,.h3-report,.h3-dist{padding:18px 16px}
   .h3-card{padding:16px}
@@ -1222,7 +1220,7 @@ body.anim-ok .reveal.in:nth-of-type(4){transition-delay:240ms}
    定调：延续「深墨绿天井 + 宋体展示字 + 等宽编号 + 黑体正文」，
          刻意不引入第二套风格；只把入口收敛、构成做得更非对称、
          排印与刻度做得更精确。全站单一薄荷强调色，直角发丝线。
-   记忆点：3D 实验室门卡右侧那张标准笛卡尔四象限统计图缩略。
+   记忆点：坐标门卡右侧那张标准笛卡尔四象限统计图缩略。
    约束：纯本地字体栈，零外部请求；本层只覆盖表现层，不动 data-act。
    ========================================================= */
 
@@ -1265,8 +1263,8 @@ body.anim-ok .reveal.in:nth-of-type(4){transition-delay:240ms}
 .stat{padding:15px 18px}
 .stat:first-child{box-shadow:inset 2px 0 0 var(--accent)}
 
-/* ---------- 20.3 3D 实验室门卡（唯一的坐标入口） ---------- */
-.lab-gate{
+/* ---------- 20.3 人生坐标门卡（首页唯一的坐标入口） ---------- */
+.coord-gate{
   position:relative;display:grid;
   grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);
   gap:clamp(20px,3vw,48px);align-items:center;
@@ -1278,69 +1276,69 @@ body.anim-ok .reveal.in:nth-of-type(4){transition-delay:240ms}
   -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
   box-shadow:var(--shadow-2),var(--shadow-hair);overflow:hidden;
 }
-.lab-gate::before{
+.coord-gate::before{
   content:"";position:absolute;left:0;top:0;height:2px;width:22%;
   background:linear-gradient(90deg,var(--accent),transparent);
 }
 /* 破格元素：描边巨型编号压在版面右下，不参与信息层级 */
-.lab-gate::after{
-  content:"LAB";position:absolute;right:-1.5%;bottom:-16%;z-index:0;
-  font-family:var(--font-mono);font-size:clamp(88px,13vw,188px);
+.coord-gate::after{
+  content:"COORD";position:absolute;right:-1.5%;bottom:-14%;z-index:0;
+  font-family:var(--font-mono);font-size:clamp(52px,8vw,116px);
   font-weight:700;letter-spacing:-.08em;line-height:1;
   color:transparent;-webkit-text-stroke:1px rgba(191,230,211,.085);
   pointer-events:none;
 }
-.lab-gate > *{position:relative;z-index:1}
-.lab-gate .eyebrow{
+.coord-gate > *{position:relative;z-index:1}
+.coord-gate .eyebrow{
   font-family:var(--font-mono);font-size:10.5px;letter-spacing:.2em;
   color:var(--accent);display:flex;align-items:center;gap:11px;
 }
-.lab-gate .eyebrow i{width:24px;height:1px;border-radius:0;background:var(--accent);
+.coord-gate .eyebrow i{width:24px;height:1px;border-radius:0;background:var(--accent);
   flex:0 0 auto;animation:none}
-.lab-gate-t{
+.coord-gate-t{
   font-family:var(--font-display);font-size:clamp(29px,3.6vw,47px);
   line-height:1.16;letter-spacing:var(--tracking-display);font-weight:600;
   color:var(--text);margin:16px 0 0;
 }
-.lab-gate-sub{
+.coord-gate-sub{
   font-family:var(--font-soft);font-size:15px;line-height:1.85;
   color:var(--text-2);max-width:42ch;margin:16px 0 0;
 }
-.lab-gate-chips{
+.coord-gate-chips{
   display:flex;flex-wrap:wrap;gap:8px;margin-top:22px;
   font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;
 }
-.lab-gate-chips span{
+.coord-gate-chips span{
   padding:7px 11px;border:1px solid var(--rule);border-radius:2px;
   color:var(--muted);background:rgba(191,230,211,.03);
 }
-.lab-gate-chips span:first-child{border-color:rgba(95,220,171,.44);color:var(--accent)}
-.lab-gate-acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
-.lab-gate-acts .btn{width:auto;min-width:0;padding:13px 22px;font-size:13px}
-.lab-gate-visual{
+.coord-gate-chips span:first-child{border-color:rgba(95,220,171,.44);color:var(--accent)}
+.coord-gate-acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.coord-gate-acts .btn{width:auto;min-width:0;padding:13px 22px;font-size:13px}
+.coord-gate-visual{
   display:flex;align-items:center;justify-content:center;min-height:230px;
   border-left:1px solid var(--hair);padding-left:clamp(12px,2vw,32px);
 }
-.lab-chart-mini{width:100%;max-width:340px;height:auto;overflow:visible;
+.quad-mini{width:100%;max-width:340px;height:auto;overflow:visible;
   filter:drop-shadow(0 12px 34px rgba(0,20,12,.55))}
 
-/* ---------- 20.4 缩略统计图：与 3D 场景同一套刻度语言 ---------- */
-.lab-chart-mini .cg{stroke:rgba(191,230,211,.16);stroke-width:1;fill:none}
-.lab-chart-mini .cg.major{stroke:rgba(191,230,211,.30)}
-.lab-chart-mini .ar{fill:rgba(191,230,211,.62)}
-.lab-chart-mini text{font-family:var(--font-mono);fill:rgba(191,230,211,.62)}
-.lab-chart-mini .tk{font-size:9px}
-.lab-chart-mini .ta{text-anchor:middle}
-.lab-chart-mini .ql{font-family:var(--font-display);font-size:10px;
+/* ---------- 20.4 缩略统计图：与主视图同一套刻度语言 ---------- */
+.quad-mini .cg{stroke:rgba(191,230,211,.16);stroke-width:1;fill:none}
+.quad-mini .cg.major{stroke:rgba(191,230,211,.30)}
+.quad-mini .ar{fill:rgba(191,230,211,.62)}
+.quad-mini text{font-family:var(--font-mono);fill:rgba(191,230,211,.62)}
+.quad-mini .tk{font-size:9px}
+.quad-mini .ta{text-anchor:middle}
+.quad-mini .ql{font-family:var(--font-display);font-size:10px;
   fill:rgba(159,240,206,.84)}
-.lab-chart-mini .qr{text-anchor:end}
-.lab-chart-mini .ln{fill:none;stroke-width:1.1;stroke-dasharray:2 3;opacity:.72}
-.lab-chart-mini .pt{opacity:.78}
-.lab-chart-mini .pd{stroke:rgba(6,20,16,.85);stroke-width:.8}
-.lab-chart-mini .ln.c1{stroke:#9ff0ce} .lab-chart-mini .pt.c1,.lab-chart-mini .pd.c1{fill:#9ff0ce}
-.lab-chart-mini .ln.c2{stroke:#b9e6ff} .lab-chart-mini .pt.c2,.lab-chart-mini .pd.c2{fill:#b9e6ff}
-.lab-chart-mini .ln.c3{stroke:#7fd8c0} .lab-chart-mini .pt.c3,.lab-chart-mini .pd.c3{fill:#7fd8c0}
-.lab-chart-mini .ln.c4{stroke:#e8cf92} .lab-chart-mini .pt.c4,.lab-chart-mini .pd.c4{fill:#e8cf92}
+.quad-mini .qr{text-anchor:end}
+.quad-mini .ln{fill:none;stroke-width:1.1;stroke-dasharray:2 3;opacity:.72}
+.quad-mini .pt{opacity:.78}
+.quad-mini .pd{stroke:rgba(6,20,16,.85);stroke-width:.8}
+.quad-mini .ln.c1{stroke:#9ff0ce} .quad-mini .pt.c1,.quad-mini .pd.c1{fill:#9ff0ce}
+.quad-mini .ln.c2{stroke:#b9e6ff} .quad-mini .pt.c2,.quad-mini .pd.c2{fill:#b9e6ff}
+.quad-mini .ln.c3{stroke:#7fd8c0} .quad-mini .pt.c3,.quad-mini .pd.c3{fill:#7fd8c0}
+.quad-mini .ln.c4{stroke:#e8cf92} .quad-mini .pt.c4,.quad-mini .pd.c4{fill:#e8cf92}
 
 /* ---------- 20.5 论坛瀑布流：发丝线与排印微调 ---------- */
 .fp-list{column-gap:16px}
@@ -1350,47 +1348,47 @@ body.anim-ok .reveal.in:nth-of-type(4){transition-delay:240ms}
 .forum-tab.on{box-shadow:var(--shadow-hair)}
 
 /* ---------- 20.6 一次编排好的入场序列（6 组 / 间隔 60ms） ---------- */
-body.anim-ok .lab-gate .eyebrow,
-body.anim-ok .lab-gate-t,
-body.anim-ok .lab-gate-sub,
-body.anim-ok .lab-gate-chips,
-body.anim-ok .lab-gate-acts,
-body.anim-ok .lab-gate-visual{
+body.anim-ok .coord-gate .eyebrow,
+body.anim-ok .coord-gate-t,
+body.anim-ok .coord-gate-sub,
+body.anim-ok .coord-gate-chips,
+body.anim-ok .coord-gate-acts,
+body.anim-ok .coord-gate-visual{
   opacity:0;transform:translateY(16px);
   transition:opacity var(--dur-base) var(--ease),transform var(--dur-base) var(--ease);
 }
-body.anim-ok .lab-gate.in .eyebrow,
-body.anim-ok .lab-gate.in .lab-gate-t,
-body.anim-ok .lab-gate.in .lab-gate-sub,
-body.anim-ok .lab-gate.in .lab-gate-chips,
-body.anim-ok .lab-gate.in .lab-gate-acts,
-body.anim-ok .lab-gate.in .lab-gate-visual{opacity:1;transform:none}
-body.anim-ok .lab-gate.in .eyebrow{transition-delay:60ms}
-body.anim-ok .lab-gate.in .lab-gate-t{transition-delay:120ms}
-body.anim-ok .lab-gate.in .lab-gate-sub{transition-delay:180ms}
-body.anim-ok .lab-gate.in .lab-gate-chips{transition-delay:240ms}
-body.anim-ok .lab-gate.in .lab-gate-acts{transition-delay:300ms}
-body.anim-ok .lab-gate.in .lab-gate-visual{transition-delay:360ms}
+body.anim-ok .coord-gate.in .eyebrow,
+body.anim-ok .coord-gate.in .coord-gate-t,
+body.anim-ok .coord-gate.in .coord-gate-sub,
+body.anim-ok .coord-gate.in .coord-gate-chips,
+body.anim-ok .coord-gate.in .coord-gate-acts,
+body.anim-ok .coord-gate.in .coord-gate-visual{opacity:1;transform:none}
+body.anim-ok .coord-gate.in .eyebrow{transition-delay:60ms}
+body.anim-ok .coord-gate.in .coord-gate-t{transition-delay:120ms}
+body.anim-ok .coord-gate.in .coord-gate-sub{transition-delay:180ms}
+body.anim-ok .coord-gate.in .coord-gate-chips{transition-delay:240ms}
+body.anim-ok .coord-gate.in .coord-gate-acts{transition-delay:300ms}
+body.anim-ok .coord-gate.in .coord-gate-visual{transition-delay:360ms}
 
 /* ---------- 20.7 焦点态 / 响应式 / 降级 ---------- */
-.lab-gate a:focus-visible,.lab-gate .btn:focus-visible,
-.lab-gate:focus-within{outline:2px solid var(--accent);outline-offset:3px}
+.coord-gate a:focus-visible,.coord-gate .btn:focus-visible,
+.coord-gate:focus-within{outline:2px solid var(--accent);outline-offset:3px}
 @media (max-width:900px){
-  .lab-gate{grid-template-columns:1fr;gap:20px}
-  .lab-gate-visual{border-left:0;border-top:1px solid var(--hair);
+  .coord-gate{grid-template-columns:1fr;gap:20px}
+  .coord-gate-visual{border-left:0;border-top:1px solid var(--hair);
     padding-left:0;padding-top:18px;min-height:0}
-  .lab-chart-mini{max-width:270px}
-  .lab-gate::after{font-size:clamp(72px,16vw,130px)}
+  .quad-mini{max-width:270px}
+  .coord-gate::after{font-size:clamp(72px,16vw,130px)}
 }
 @media (max-width:520px){
   .hero-copy{padding-left:14px}
   .hero-copy .eyebrow i{width:18px}
-  .lab-gate{padding:20px 18px}
-  .lab-gate-t{font-size:26px}
-  .lab-gate-sub{font-size:14px}
-  .lab-gate-chips span{font-size:9px;padding:6px 8px}
-  .lab-gate-acts .btn{padding:12px 16px;font-size:12px}
-  .lab-chart-mini{max-width:230px}
+  .coord-gate{padding:20px 18px}
+  .coord-gate-t{font-size:26px}
+  .coord-gate-sub{font-size:14px}
+  .coord-gate-chips span{font-size:9px;padding:6px 8px}
+  .coord-gate-acts .btn{padding:12px 16px;font-size:12px}
+  .quad-mini{max-width:230px}
 }
 /* v10 修正：≤440px 时 11.5vw 的标题会把第二行「先别急着努力。」的句号顶出右边缘。
    换成更缓的字阶，保证 320 / 375 / 420 三档都完整落在版心内。 */
@@ -1403,7 +1401,7 @@ body.anim-ok .lab-gate.in .lab-gate-visual{transition-delay:360ms}
   .hero-visual{right:0}
 }
 @media (prefers-reduced-motion:reduce){
-  .lab-gate,.lab-gate *{animation:none!important;transition:none!important;
+  .coord-gate,.coord-gate *{animation:none!important;transition:none!important;
     opacity:1!important;transform:none!important}
   .hero-copy h1{animation:none!important}
 }
