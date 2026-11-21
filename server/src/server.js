@@ -1,8 +1,8 @@
 import http from 'node:http';
 import { createApp } from './app.js';
-import { env } from './config/env.js';
-import { logger } from './shared/logger.js';
-import { closePool } from './infra/db.js';
+import { env } from './core.js';
+import { logger } from './core.js';
+import { closePool } from './core.js';
 
 const app = createApp();
 const server = http.createServer(app);
