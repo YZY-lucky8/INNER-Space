@@ -1,15 +1,15 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { env } from '../src/config/env.js';
+import { env } from '../src/core.js';
 import { connect } from './db-connect.mjs';
-import { splitStatements } from './sql-splitter.mjs';
 import { runMigrations } from './migrate.mjs';
+import { splitStatements } from './sql-splitter.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const databaseDir = path.resolve(here, '../../database');
 
-const BASE_SCRIPTS = ['schema.sql', 'views.sql', 'procedures.sql', 'triggers.sql'];
+const BASE_SCRIPTS = ['init.sql'];
 
 async function main() {
   const conn = await connect({ withDatabase: false });
@@ -36,7 +36,7 @@ async function main() {
     }
 
     await runMigrations('up', conn);
-    console.log('[init] 完成：23 张业务表 + 6 视图 + 8 过程 + 7 触发器 + 4 张服务端表');
+    console.log('[init] 完成：19 张业务表 + 6 视图 + 8 过程 + 7 触发器 + 4 张服务端表');
   } finally {
     await conn.end();
   }
