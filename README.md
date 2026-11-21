@@ -2,12 +2,14 @@
 AIGC:
     Label: "1"
     ContentProducer: 001191440300708461136T1XGW3
-    ProduceID: 3936f21f25e6ba96070df29586ae9321_08c42d17d80611f18947525400de85a5
-    ReservedCode1: NXPihOTZDhR7B9eDBkeeaSO1Y/Zc283EMDSPwoXFbHbLCCtxjJA/fvngvPkMs3o8eA1yTT4Qsw+NSq6t2CWBTdJGqSTjzADpDoygXMpt4faFpFwIZBq7iso46L8kh9158SrhmKCdmR/+Jk7LmfI1v08iOvBFsRRGfX3ONwRHvZBqPAKMt5Ahg+3dvi4=
+    ProduceID: 3936f21f25e6ba96070df29586ae9321_0a2308f7e4fe11f18e5a525400de85a5
+    ReservedCode1: JJSZe0Y9IJbbDjHBJm+0db1Ouyf9UF4kdIAvRqj1VZzPGsVYOi3oAs4R0je/Gs7+JgMaC64T/Xi9RiKbukbjN9iVnEUnzZUh9a6N3M5zUQCOoZmhhd6HQGUjCf/OAsGv8zc6DEVq1VxvGTtSkWGu7TJmyfcX3m1Wd4eeV/SJtObsISouZKfMoempXPI=
     ContentPropagator: 001191440300708461136T1XGW3
-    PropagateID: 3936f21f25e6ba96070df29586ae9321_08c42d17d80611f18947525400de85a5
-    ReservedCode2: NXPihOTZDhR7B9eDBkeeaSO1Y/Zc283EMDSPwoXFbHbLCCtxjJA/fvngvPkMs3o8eA1yTT4Qsw+NSq6t2CWBTdJGqSTjzADpDoygXMpt4faFpFwIZBq7iso46L8kh9158SrhmKCdmR/+Jk7LmfI1v08iOvBFsRRGfX3ONwRHvZBqPAKMt5Ahg+3dvi4=
+    PropagateID: 3936f21f25e6ba96070df29586ae9321_0a2308f7e4fe11f18e5a525400de85a5
+    ReservedCode2: JJSZe0Y9IJbbDjHBJm+0db1Ouyf9UF4kdIAvRqj1VZzPGsVYOi3oAs4R0je/Gs7+JgMaC64T/Xi9RiKbukbjN9iVnEUnzZUh9a6N3M5zUQCOoZmhhd6HQGUjCf/OAsGv8zc6DEVq1VxvGTtSkWGu7TJmyfcX3m1Wd4eeV/SJtObsISouZKfMoempXPI=
 ---
+
+
 
 # INNERSCAPE · 卡点
 
@@ -110,31 +112,36 @@ Step 3  规则兜底校验（schema / 安全标记 / 与 Step 1 是否严重矛�
 
 ---
 
-## 5. 数据模型口径（16 表 → 实落 23 表）
+## 5. 数据模型口径（16 表 → 实落 19 表）
 
 设计口径来自 PRD §4.3：旧版 21 张表 → **16 张（8 张复用 + 8 张新建）**。
 
-`database/schema.sql` 当前实建 **23 张**（v1.1 的 20 张 + v1.2 论坛 3 张）。v1.1 相对 PRD 那 16 张多出的对象及理由如下：
+`database/schema.sql` 当前实建 **19 张**（PRD 16 张 + v1.2 论坛 3 张）。2026-11-20 精简时删掉了 4 张后端从不读写的表，表数量据此回到 PRD 口径，字段与业务语义未改。
 
-| 差异对象 | 数量 | 理由 |
+| 精简对象 | 原设计意图 | 处理方式 |
 |---|---|---|
-| 内容资产表 `bottleneck_types` / `experiment_templates` | +2 | PRD §2.4 明确要求（20 类型 × 5 变体 = 100 条实验模板是产品护城河） |
-| `observers`（观察者反馈） | +1 | PRD §4.1 ER 图已含，用于"他人反馈"这一自我认知来源 |
-| `mood_checkins`（情绪基线） | +1 | PRD §4.3 归入复用，16 表口径按"新建"计，故此处计入复用侧 |
+| `bottleneck_types`（内容资产） | PRD §2.4 的 20 类卡点 × 5 变体模板 | 后端零读写，前端一直用内联常量；表与种子 INSERT 一并删除 |
+| `observers`（观察者反馈） | PRD §4.1 ER 图的"他人反馈"来源 | 该功能未进本期闭环，后端零引用，删除 |
+| `mood_checkins`（情绪基线） | PRD §4.3 归入复用 | 情绪记录走 localStorage 的 `DB.mood`，不入库，删除 |
+| `user_profiles`（画像快照） | 缓存 `users` 的派生字段 | 可由 `users` + `human3_assessments` 实时推导，删除 |
 
-**v1.1 的 20 张表构成（v1.2 论坛 3 张另见上一张表）**
+`experiment_templates` 虽同属内容资产，但 `experiments.template_id` 有真实外键依赖，保留。
+
+**当前 19 张表构成**
 
 | 分组 | 表 |
 |---|---|
 | 生涯复用（4） | `majors`、`certificates`、`postgrad_directions`、`positions` |
 | 生涯映射（3） | `major_certificates`、`major_postgrads`、`position_certificates` |
-| 用户域复用（2） | `user_certificates`、`mood_checkins` |
-| 核心业务（6） | `users`、`user_profiles`、`stuck_sessions`、`hypotheses`、`experiments`、`experiment_logs` |
-| 复盘与资产（3） | `reviews`、`evidence_items`、`observers` |
-| 内容资产（2） | `bottleneck_types`、`experiment_templates` |
+| 用户域复用（1） | `user_certificates` |
+| 核心业务（5） | `users`、`stuck_sessions`、`hypotheses`、`experiments`、`experiment_logs` |
+| 复盘与资产（2） | `reviews`、`evidence_items` |
+| 内容资产（1） | `experiment_templates` |
 | 经验分享（3，v1.2 新增） | `forum_posts`、`forum_replies`、`forum_reply_votes` |
 
-> v1.2 起 `database/schema.sql` 实落 **23 张表**。论坛 3 张只存用户**主动发出来**的内容；卡点描述、实验日志、身份证据仍只留用户本机，不入库、不上传。线上论坛实际跑的是应用云数据库的同名表（PostgreSQL + RLS），本目录的 MySQL 脚本是课程设计口径，两者字段语义一致但不共用实例（详见 §12）。
+生涯域这 8 张（4 + 3 + 1）只被 `init.sql` 视图分区的 6 个视图引用、后端代码不直接读写，按课程设计口径**保留未删**。
+
+> v1.2 起 `database/init.sql` 的建表分区实落 **19 张表**（2026-11-20 精简后）。论坛 3 张只存用户**主动发出来**的内容；卡点描述、实验日志、身份证据仍只留用户本机，不入库、不上传。线上论坛实际跑的是应用云数据库的同名表（PostgreSQL + RLS），本目录的 MySQL 脚本是课程设计口径，两者字段语义一致但不共用实例（详见 §12）。
 
 **已废弃的旧表**：`questions` / `assessments` / `assessment_answers`（自评量表）、`user_settings`、`time_capsules` / `seeds` / `seed_sounds` / `fragrance_recipes`；`daily_punch` 改语义为 `experiment_logs`，`diagnoses` / `action_plans` 重构为 `stuck_sessions` / `experiments`。
 
@@ -146,38 +153,49 @@ Step 3  规则兜底校验（schema / 安全标记 / 与 Step 1 是否严重矛�
 INNERSPACE/
 ├── src/
 │   ├── index.html          单文件前端入口；主流程零依赖，论坛走官方 CDN SDK
-│   ├── api.js              API 客户端 + 显式「云同步」面板（动态注入，不侵入主站渲染）
+│   ├── app.js              前端唯一脚本入口，六个分区依次为：
+│   │                        云服务公开配置 → API 客户端与「云同步」面板 →
+│   │                        WebGL 银河粒子 → 水面折射涟漪 → 星夜氛围 → Human3 四象限坐标
 │   ├── visual.css          v6 设计层：星夜疗愈 + 高透玻璃（须在内联样式之后引入）
-│   ├── particles.js        原生 WebGL 3D 银河粒子引擎（零依赖，失败回退 2D）
-│   ├── water.js            原生 WebGL 水面折射涟漪（照片纹理 UV 位移，失败回退 2D）
-│   ├── ambient.js          点击派发 / 流星 / 星野 / 萤火光尘（零依赖）
-│   ├── cloud.config.js     论坛云服务公开配置（endpoint / publishableKey，不含密钥）
-│   ├── assets/
-│   │   ├── background/bg.jpg   用户提供的树冠仰拍主背景（已去除水印）
-│   │   └── …              旧轮播照片与蝴蝶素材
-│   └── lab/hand3d.html     3D 实验室（three.js 粒子云 + 摄像头手部交互）
+│   └── assets/
+│       ├── background/bg.jpg   用户提供的树冠仰拍主背景（已去除水印）
+│       └── …              旧轮播照片与蝴蝶素材
 ├── server/                 全栈后端（Node 22 + Express + MySQL 8）
-│   ├── src/config/         集中配置与启动校验
-│   ├── src/shared/         类型化错误 / 结构化日志 / 危机词库 / 统一响应
-│   ├── src/middleware/     请求 ID / JWT 认证 / zod 校验 / 全局错误处理
-│   ├── src/infra/          MySQL 连接池与事务
-│   ├── src/features/       auth · sync · diagnose · forum · health（按功能分三层）
+│   ├── src/core.js         配置与启动校验 / 类型化错误 / 结构化日志 / 危机词库 /
+│   │                       统一响应 / 请求 ID / JWT 认证 / zod 校验 / 全局错误处理 /
+│   │                       MySQL 连接池与事务（原 config+shared+middleware+infra 合并）
+│   ├── src/features/       auth · sync · diagnose · forum · health · human3 各一个文件 + mappers.js
 │   ├── migrations/         可回滚迁移（含 down.sql）
 │   ├── scripts/            init-db / migrate / check-syntax / smoke
 │   ├── tests/              单元测试（node:test）
 │   ├── .env.example        占位配置，真实 .env 不入库
 │   └── package.json
 ├── database/               MySQL 8 脚本（课程设计口径，现被后端真实读写）
-│   ├── schema.sql          建表（23 张表，含论坛 3 张）
-│   ├── views.sql           视图（6 个，含 v_forum_thread）
-│   ├── procedures.sql      存储过程（8 个）
-│   └── triggers.sql        触发器（7 个，承担证据不可悬空、能量越界等业务红线）
+│   └── init.sql            建库唯一入口，按「建表 → 视图 → 存储过程 → 触发器」分区：
+│                           19 张表（含论坛 3 张）· 6 视图（含 v_forum_thread）·
+│                           8 存储过程 · 7 触发器（承担证据不可悬空、能量越界等业务红线）
 ├── docs/                   v1.0 设计稿（docx），**保留不动**
 ├── REFACTOR.md             重构说明（变更总览 / 自检结果 / 回退方式）
-├── start-lab.bat
 ├── .gitignore
 └── README.md
 ```
+
+---
+
+## 6.1 文件合并说明（2026-11-20）
+
+为降低文件数量与维护成本，在**不改动任何业务逻辑**的前提下做了三处合并，代码行数净变化仅来自分区注释：
+
+| 合并前 | 合并后 | 说明 |
+|---|---|---|
+| `src/api.js`、`particles.js`、`water.js`、`ambient.js`、`human3.js`、`cloud.config.js`（6 个） | `src/app.js`（1 个） | 六个文件原本各自是独立 IIFE、只通过 `window` 上的约定名通信，拼接不产生变量冲突；分区顺序与原 `index.html` 的加载顺序一致 |
+| `server/src/` 下 config / shared / middleware / infra 共 10 个文件 | `src/core.js`（1 个） | 统一为基础层：配置、日志、错误类、危机词库、统一响应、认证、校验、连接池 |
+| `server/src/features/<模块>/` 下 routes / service / repo / rules 共 19 个文件 | `features/<模块>.js`（6 个）+ `features/mappers.js` | 每个功能收敛为单文件，`routes → service → repo → rules` 仍按段内注释分节 |
+| `database/schema.sql`、`views.sql`、`procedures.sql`、`triggers.sql`（4 个） | `database/init.sql`（1 个） | 按「建表 → 视图 → 存储过程 → 触发器」分区，`DELIMITER` 块均成对闭合，单文件即可建库 |
+
+**验收**：`npm test` 27/27 通过；`node --check` 全部 JS 通过；`init.sql` 解析出 19 表 / 6 视图 / 8 过程 / 7 触发器，与合并前完全一致。
+
+> 说明：下文 v6 / v7 / v8 / v1.4 等**变更历史记录**中出现的 `api.js`、`water.js`、`particles.js`、`ambient.js`、`cloud.config.js`、`schema.sql` 等分文件名，均为合并前的历史形态，记录保留当时原貌以便追溯；阅读当前代码请以本表为准。
 
 ---
 
@@ -186,7 +204,7 @@ INNERSPACE/
 **方式 A · 本机打开主流程（无需任何环境）**
 
 直接双击 `src/index.html`，或在浏览器地址栏打开 `file:///E:/MYproject/INNERSPACE/src/index.html`。
-六步闭环、登录门禁、纯色小蝴蝶与情绪轮播、3D 实验室全部可用，**主流程不发任何网络请求**（论坛 SDK 会尝试联网，失败则自动降级为「需要在线访问」提示）；卡点描述、实验记录、身份证据存在浏览器 `localStorage`（键 `kadian_db_v1`），刷新不丢。带 `?demo=1` 可显示「载入演示数据」入口。
+六步闭环、登录门禁、纯色小蝴蝶与情绪轮播、人生坐标四象限图全部可用，**主流程不发任何网络请求**（论坛 SDK 会尝试联网，失败则自动降级为「需要在线访问」提示）；卡点描述、实验记录、身份证据存在浏览器 `localStorage`（键 `kadian_db_v1`），刷新不丢。带 `?demo=1` 可显示「载入演示数据」入口。
 此方式下论坛会明确显示「需要在线访问」——它不会用本地假数据冒充同步，个人记录也一个字节都不会上传。
 
 **方式 B · 在线访问论坛（跨设备多人）**
@@ -199,7 +217,7 @@ INNERSPACE/
 cd server
 npm install
 cp .env.example .env          # Windows: copy .env.example .env
-npm run db:init               # 建库 + 导入四个 SQL 脚本 + 执行迁移
+npm run db:init               # 建库 + 导入 init.sql + 执行迁移
 npm start                     # http://localhost:8787/
 ```
 
@@ -215,16 +233,13 @@ npm start                     # http://localhost:8787/
 CREATE DATABASE innerspace DEFAULT CHARACTER SET utf8mb4;
 ```
 
-2. 按依赖顺序导入脚本：
+2. 导入建库脚本（表、视图、存储过程、触发器已按依赖顺序合并在同一个文件里）：
 
 ```bash
-mysql -u root -p innerspace < database/schema.sql
-mysql -u root -p innerspace < database/views.sql
-mysql -u root -p innerspace < database/procedures.sql
-mysql -u root -p innerspace < database/triggers.sql
+mysql -u root -p innerspace < database/init.sql
 ```
 
-3. 前端与数据库的对应关系见 `REFACTOR.md` §3.3；全栈模式下 `server/src/features/sync` 负责 localStorage 快照 ↔ 23 张表的映射，AI 端点已改为服务端代理 `/api/v1/diagnose`（见 §14）。
+3. 前端与数据库的对应关系见 `REFACTOR.md` §3.3；全栈模式下 `server/src/features/sync` 负责 localStorage 快照 ↔ 19 张表的映射，AI 端点已改为服务端代理 `/api/v1/diagnose`（见 §14）。
 
 ---
 
@@ -263,18 +278,17 @@ mysql -u root -p innerspace < database/triggers.sql
 | 蝴蝶 | 单只内联 SVG，28–30px 纯色小蝶：四片纯白翅面、无渐变 / 无翅脉 / 无斑点，身体与触角明显缩小；v7 移除贴身光晕，只留 `1.4px` 极细冷白边；不引图片 |
 | 蝴蝶姿态 | 弹簧阻尼跟随、指针静止后绕飞盘旋、无指针时复合曲线巡游；`rotateY/rotateX` 3D 翻飞侧倾 + `translateZ` 景深近大远小；canvas 蝶身局部坐标的离散闪粉（暖金 / 冷青亮点 + 十字星芒，见 §14.4）；`prefers-reduced-motion` 静态降级 |
 | 粒子互动（主站） | canvas 深空粒子 120–205 颗：光标拨开、按住拖动涡旋、点击涟漪、双击爆发、双指缩放；连线近邻早退 |
-| 粒子互动（实验室） | three.js 粒子云 12k–18k 主粒子 + 星空 / 尘埃；张开 / 握拳 / 只伸食指 / 比 V / 捏合 / 挥手 / 双手共 7 类手势，映射云团 / 光束 / 双核 / 凝聚四形态与爆发脉冲；鼠标、双指、数字键 1–4 兜底 |
 | 论坛排版 | 小红书式三列图文瀑布流（实景封面 + 情绪标签 + 错落高度 + 头像署名 + 心形有用数）、搜索与频道 tab、悬浮发布按钮；笔记式详情页与评论卡片、sticky 回答栏、双击回答点「有用」 |
 | 数据（个人，本机） | 浏览器 localStorage：卡点描述、实验记录、身份证据，**不上传** |
 | 数据（论坛，线上） | 应用云数据库 PostgreSQL + RLS：公开读、仅本人可写删；官方 CDN SDK |
 | 论坛账号（线上） | 云端邮箱验证码登录（无密码），会话由 SDK 维护 |
-| 数据（课程设计 / 本机实例） | MySQL 8.0（23 表 / 6 视图 / 8 过程 / 7 触发器），由 `npm run db:init` 导入本机实例 |
+| 数据（课程设计 / 本机实例） | MySQL 8.0（19 表 / 6 视图 / 8 过程 / 7 触发器），由 `npm run db:init` 导入本机实例 |
 | 后端 | Node.js 22 + Express 4，按功能分三层 `routes → services → repositories`，零构建 |
 | 配置 / 日志 / 错误 | `.env` 集中校验与快速失败；结构化 JSON 日志贯穿请求 ID；类型化错误 + 全局处理器 |
 | 数据访问 | mysql2 连接池、事务化多步写入、迁移可回滚；同步为事务内全量重建（幂等） |
 | 接口 | REST，统一 `{ok, data, error}`；zod 边界校验；CORS 显式来源；helmet 安全头；限流 |
 | 认证 | 邮箱验证码 OTP + JWT access（15 分钟，只存内存）+ 服务端 refresh（httpOnly cookie，可撤销）+ RBAC |
-| 前端 API 客户端 | `src/api.js`：401 自动刷新一次、4xx 不重试、5xx 最多 3 次、断网离线提示、错误映射可读文案 |
+| 前端 API 客户端 | `src/app.js` 的 API 分区：401 自动刷新一次、4xx 不重试、5xx 最多 3 次、断网离线提示、错误映射可读文案 |
 | AI | 服务端持有 LLM Key（`/api/v1/diagnose`、`/api/v1/diagnose/actions`）；未配置即 `AI_DISABLED`，前端静默降级到规则引擎 |
 | 云同步 | 离线优先：localStorage 仍是主存储，显式登录并点「同步」才上传；事务内幂等，revision 冲突检测 |
 | 版本控制 | Git + GitHub（旧版快照：`v1.0-persona-model`） |
@@ -316,7 +330,7 @@ mysql -u root -p innerspace < database/triggers.sql
 | 帖子 / 回答 / 有用反馈 | 应用云数据库 | 所有访问者可读 | 只有主动发布的内容才公开；写删由 RLS 限制为本人 |
 | 论坛显示名 / 实验备忘 | 浏览器 localStorage | 只有这台设备 | 显示名只用于署名；论坛回答可「存到我的实验备忘」，仅本机可见 |
 
-**两套数据库，别混**：线上跑的是应用云数据库（PostgreSQL，`forum_posts` / `forum_replies` / `forum_votes` + RLS）；`database/` 下的 MySQL 脚本是课程设计交付物（23 表 / 6 视图），字段语义一致但实例不共用。论坛不读写 `stuck_sessions` / `experiments` / `evidence_items`。
+**两套数据库，别混**：线上跑的是应用云数据库（PostgreSQL，`forum_posts` / `forum_replies` / `forum_votes` + RLS）；`database/` 下的 MySQL 脚本是课程设计交付物（19 表 / 6 视图），字段语义一致但实例不共用。论坛不读写 `stuck_sessions` / `experiments` / `evidence_items`。
 
 **账号**：本机账号（或访客）用来打开私人空间；论坛另用云端邮箱验证码登录（不设密码），两者互不干扰。云端未登录时仍可浏览帖子，但不能写。
 
@@ -327,7 +341,7 @@ mysql -u root -p innerspace < database/triggers.sql
 - 不做全站排行榜、关注、私信、AI 陪聊；「有用」只是单条回答下的计数；
 - 「一键发帖」不会自动上传卡点原文，只是把文字带入可编辑表单，由用户自己按下发布。
 
-**运行前提**：论坛必须经由应用发布的在线 HTTPS 地址访问，云端按来源域名精确校验，`file://` / localhost 无法完成身份验证。本地打开时论坛明确提示，不会静默降级成假数据。`src/cloud.config.js` 只含公开配置（endpoint / publishableKey），不含任何长期密钥。
+**运行前提**：论坛必须经由应用发布的在线 HTTPS 地址访问，云端按来源域名精确校验，`file://` / localhost 无法完成身份验证。本地打开时论坛明确提示，不会静默降级成假数据。`src/app.js` 的云配置分区 只含公开配置（endpoint / publishableKey），不含任何长期密钥。
 
 **v1.4 排版（2026-11-15）**：列表改为三列图文瀑布流（窄屏两列），封面复用 `assets/background` 三张实景图并按情绪做色彩分级，情绪标签由帖子内容派生（迷茫 / 拖延 / 在意 / 疲惫 / 闷 / 绕 / 松）；卡片高度按序号错落，附头像署名、心形有用数与回答数。顶部增搜索框（只显隐卡片、不重渲染、不丢光标）、推荐 / 最多回答 / 已有答案 / 我的 四个频道与悬浮发布按钮；详情页改笔记式沉浸排版与评论卡片、底部 sticky 回答栏；双击回答会真实点一次「有用」并飘心。**以上全是表现层改动**：`f:` 动作分发、云端读写、危机拦截与 RLS 策略未变，也没有新增数据库字段。
 
@@ -341,7 +355,7 @@ mysql -u root -p innerspace < database/triggers.sql
 
 | 级别 | 问题 | 处理 |
 |---|---|---|
-| P0 | 项目实际没有后端，23 张表从未被程序读写 | 新建 `server/`，`npm run db:init` 真正导入并读写 |
+| P0 | 项目实际没有后端，建好的表从未被程序读写 | 新建 `server/`，`npm run db:init` 真正导入并读写 |
 | P0 | 前端 XHR 把 API Key 以 `Authorization: Bearer` 直发第三方，密钥存 localStorage | 移除浏览器密钥入口（`aiCfgSet` 停用、`aiModalOpen` 改为状态提示），改走服务端 LLM 代理；`ai.local.js` 不再被引用 |
 | P1 | 危机拦截 / 字数校验只在客户端，绕过前端即可写库 | `server/src/shared/safety.js` 是 `detectCrisis()` 的服务端等价实现，所有写库入口独立复算 |
 | P1 | `schema.sql` 全程 `FOREIGN_KEY_CHECKS=0`，`experiments.fk_ex_tpl` 引用了后面才建的表 | 内容资产两张表前移到「第零部分」，DROP 后立即恢复外键校验；已实测该约束真实生效 |
@@ -371,11 +385,11 @@ mysql -u root -p innerspace < database/triggers.sql
 
 ### 13.4 数据边界（与 §12 一致，未放宽）
 
-localStorage 仍是主存储。`src/api.js` 只在 `http(s)` 下探测一次**公开配置**，`file://` 下一个请求都不发；只有用户显式登录并点击「把本机数据同步到云端」，卡点描述 / 实验记录 / 身份证据才会上传。access token 只存内存，refresh 只进 httpOnly cookie，浏览器永不接触任何 API Key。论坛线上仍可走云 SDK（PostgreSQL + RLS），本机这套 MySQL 实现提供相同语义的 API，两者实例不共用。
+localStorage 仍是主存储。`src/app.js` 的 API 分区只在 `http(s)` 下探测一次**公开配置**，`file://` 下一个请求都不发；只有用户显式登录并点击「把本机数据同步到云端」，卡点描述 / 实验记录 / 身份证据才会上传。access token 只存内存，refresh 只进 httpOnly cookie，浏览器永不接触任何 API Key。论坛线上仍可走云 SDK（PostgreSQL + RLS），本机这套 MySQL 实现提供相同语义的 API，两者实例不共用。
 
 ### 13.5 验证结果
 
-`npm test` 27/27 通过；`npm run db:init` 成功导入 23 表 / 6 视图 / 8 过程 / 7 触发器 + 4 张服务端表；`npm run smoke` **34/34 通过**（含 OTP→JWT→push→pull→冲突检测→危机拦截→证据红线→Human 3.0 匿名坐标与 notes 复算→论坛写入→清理的完整链路）。`node scripts/check-syntax.mjs` 38 个文件全过。
+`npm test` 27/27 通过；`npm run db:init` 成功导入 19 表 / 6 视图 / 8 过程 / 7 触发器 + 4 张服务端表；`npm run smoke` **34/34 通过**（含 OTP→JWT→push→pull→冲突检测→危机拦截→证据红线→Human 3.0 匿名坐标与 notes 复算→论坛写入→清理的完整链路）。`node scripts/check-syntax.mjs` 38 个文件全过。
 
 ### 13.6 启动命令与遗留事项
 
@@ -395,7 +409,7 @@ npm test && npm run smoke     # 另开一个终端跑冒烟
 
 ---
 
-## 14. 前端视觉与 3D 粒子（v7.0 / 2026-11-15）
+## 14. 前端视觉与粒子动效（v7.0 / 2026-11-15）
 
 ### 14.1 设计定调：树冠天井 · 星夜水镜
 
@@ -452,16 +466,22 @@ npm test && npm run smoke     # 另开一个终端跑冒烟
 - **可读性兜底**：玻璃近乎无色，照片亮处会吃掉 12px 细字，因此 `.forum-bound / .card.soft.forum-auth / .forum-hero-band / .forum-empty` 额外压一层 `rgba(4,20,14,.46)` 深底，模糊与光扫保留
 - 所有 `data-act` / `data-id` / `data-search` 与云端读写、危机拦截链路**完全未改动**
 
-### 14.6 3D 实验室
+### 14.6 人生坐标四象限图（纯 SVG）
 
-`src/lab/hand3d.html` 保留 MediaPipe 手部识别与自动演示链路，色板随主站回到薄荷绿 / 冷白；加色双层辉光 shader、手势轨迹、快速张开脉冲、指针斥力与换形涟漪保留。
+坐标图由 `src/human3.js` 的 `quadrantHtml()` 直接拼字符串生成 **纯 SVG**：无 canvas、无第三方库、无独立页面，`file://` 双击即可打开。
+
+- **坐标系**：`viewBox="0 0 420 320"`，横轴个人 ↔ 集体、纵轴外在 ↔ 内在，四象限各一块底色；14 条网格线（含 0.5 档细线）、2 条带箭头的轴 `path`、17 条刻度 / 轴标题文字，原点 O 居中
+- **数据表达**：每象限一条 `polyline`（知识 / 经验 / 技能三点连折线）+ 3 个 `circle` 数据点，合计 4 条折线 12 个点；未标格画成 `empty` 半透明点，不假装有值
+- **可读性**：每个数据点带 `<title>`，悬停显示「象限 · 维度 · 档位文字」，**不显示数字、不显示分数、不评定等级**
+- **瓶颈提示**：最费劲的象限加 `hot` 描边，只作视觉提示，判断逻辑全在纯函数 `bottleneck()` 里
+- **刷新方式**：`refresh()` 重写 `#h3-quad-host` 的 `innerHTML`，切页不重建容器、不留事件监听
 
 ### 14.7 验证结果（v7 最终）
 
 | 关卡 | 结果 |
 |---|---|
-| 语法 | `check-syntax.mjs` **38/38**；实验室 module 脚本单独 `node --check` 通过 |
-| 真实渲染 | 无头 Chrome 实测 1440 / 768 / 375 三档 + 论坛页 + 实验室，`WebGL available:true`、`water.textured:true` |
+| 语法 | `check-syntax.mjs` **38/38**；`index.html` 内联脚本单独 `node --check` 通过 |
+| 真实渲染 | 无头 Chrome 实测 1440 / 768 / 375 三档 + 论坛页，`WebGL available:true`、`water.textured:true` |
 | 水波折射 | 静态帧 vs 产波帧抽样对比 `meanDelta 79–126`，水波层原始裁剪截图显示树叶/蓝天被推挤成细密明暗波带；`mode:webgl` / `textured:true` |
 | v7 雨滴尺度 | 单滴 `scale:0`、影响半径 **38–60px**（抽样差异像素 761–1023）；连点 6 次 `scale` 逐滴 `0→0.21→0.40→0.58→0.75→0.91`、影响半径 **283–313px**，6 波叠加；停手 3.2s 后自动回落到单滴 |
 | 蝶粉质感 | 尾迹 canvas 460 个非空像素、`maxAlpha 252`、高亮核占比 25.9%；4 倍放大特写为独立暖金/冷青亮点 + 十字星芒，无白色雾团、无长线 |
@@ -475,7 +495,7 @@ npm test && npm run smoke     # 另开一个终端跑冒烟
 - 新增 `src/water.js`（WebGL 照片折射涟漪）、`src/ambient.js`（点击派发 / 流星 / 星野 / 萤火光尘）、`src/assets/background/bg.jpg`（用户提供主背景，已去水印）
 - 重写 `src/visual.css`（v6 设计令牌 + 部分高透玻璃 + 水面层 + 论坛可读性兜底，**必须在内联 `<style>` 之后引入**）
 - 修改 `src/index.html`：引入 `water.js`、新增 `#photo-bg` 固定照片层、**蝶身局部坐标**鳞粉尾迹、删除折线丝带与 `hist[]`/`TH[]`、论坛装饰与离线页
-- 修改 `src/particles.js`：银河形态 / 薄荷配色 / `ripple(x,y,amp)` 联动；`src/lab/hand3d.html`、`src/api.js`：色板统一回薄荷绿
+- 修改 `src/particles.js`：银河形态 / 薄荷配色 / `ripple(x,y,amp)` 联动；`src/api.js`：色板统一回薄荷绿
 - **v7 微调**：`src/water.js` 雨滴尺度 + `uScale[6]` 连点累积 + 包围盒剔除；`src/ambient.js` 按 scale 联动星点；`src/particles.js` `ripple` 接受幅度；`src/index.html` / `src/visual.css` 蝶粉改为独立绘制的离散闪粉并关闭 `#bf-glow`
 
 **回退**：删掉 `index.html` 里的 `water.js` 引入与 `#photo-bg` 节点即可回到 CSS 照片背景；`visual.css` 的 `<link>` 移除可回到内联旧样式（色值已做源码替换，需一并回滚）。
@@ -487,11 +507,10 @@ npm test && npm run smoke     # 另开一个终端跑冒烟
 本产品定位为**学业与职业困惑的结构化梳理（发展辅导）**，不是心理咨询、不是心理诊断、不是治疗，也不做任何心理健康评估。
 Human 3.0 四象限坐标是**用户自评的定位工具**，同样不构成心理、医学或人格评估：不显示分数、等级、百分比或诊断结论，全部读数只换算成图形的长度与体量。
 一旦识别到自伤 / 轻生相关表达，流程立即中止并给出求助资源——**这件事不该由产品来处理**。
-*（内容由AI生成，仅供参考）*
 
 ---
 
-## 16. Human 3.0 四象限坐标与 3D 人生模型（v8.0 / 2026-11-15）
+## 16. Human 3.0 四象限坐标模型（v8.0 / 2026-11-15）
 
 把 Dan Koe《HUMAN 3.0》的四象限（心智 / 身体 / 精神 / 使命）× 三层 × 三阶段，落成一条**可离线、可复查、可实体化**的闭环。设计依据见 `docs/HUMAN3_DESIGN.md`。
 
@@ -500,8 +519,8 @@ Human 3.0 四象限坐标是**用户自评的定位工具**，同样不构成心
 | 未决项 | 结论 |
 |---|---|
 | 12 格口径 | **4 象限 × 3 Traits**（知识 / 经验 / 技能），每格自评 1 / 2 / 3 |
-| 入口强度 | **首屏明显入口**：主 CTA 右侧「人生坐标 · 3D 模型 ↗」+ hero 下方立体柱预览卡 + 导航「人生坐标」 |
-| 实施范围 | **P0–P3 一次做完**（前端 / 服务端 / 3D 可视化 / 独立表与统计） |
+| 入口强度 | **首屏明显入口**：主 CTA 右侧「人生坐标 · 坐标图 ↗」+ hero 下方坐标缩略图预览卡 + 导航「人生坐标」；v10 起收敛为唯一一张坐标门卡（见 §17.2） |
+| 实施范围 | **P0–P3 一次做完**（前端 / 服务端 / 坐标图可视化 / 独立表与统计） |
 | 复查周期 | 两级：7 天小复查 + 90 天大复查（日期在 `dose.check_at` / `dose.review_at`，到点用 `DB.remind` 一次性标记） |
 
 ### 16.2 领域层：确定性纯函数，零 LLM
@@ -516,17 +535,16 @@ Human 3.0 四象限坐标是**用户自评的定位工具**，同样不构成心
 
 数据落在 `DB.human3`（`localStorage` 已有存储键的附加顶层字段，旧库零迁移）；12 份上限、草稿实时落盘、任意状态可退出。一键「放进这周的小实验」会创建**合法 session + experiment**，因此云同步不会被孤立记录清理或证据红线拦下。
 
-### 16.3 3D 实体化：把人生模型立起来
+### 16.3 坐标图可视化：把 12 格画在标准笛卡尔四象限里
 
-`src/lab/human3d.html` 是一台独立的 three.js 场景（复用 `src/lab/vendor/three.min.js`，普通 script，`file://` 双击可用）：
+坐标图整条链路收在 **`src/human3.js` 内部生成 SVG 字符串**，随 `refresh()` 写进 `#h3-quad-host`：不加载任何三方资源、不开独立页面，刷新只替换 `innerHTML`。
 
-- **四座晶体塔**对应四个象限，十字分布在悬浮基座上；每座由三段六棱柱堆叠，分别对应知识 / 经验 / 技能。**段高、半径、发光强度、透明度由该格 1/2/3 决定**，未标的格留成半透明虚位
-- **中心八面体核心**代表「此刻」，双层光环缓慢自转；四条光桥把核心连向四塔，亮度随读数变化
-- **阻塞链 / 解锁链**画成红色 / 暖金弧线（贝塞尔 + 流动光点）；瓶颈象限基座下沉并扩散一圈红色水波环
-- 交互：拖拽旋转、滚轮缩放、射线拾取聚焦某座塔（HUD 显示该象限三格档位文字，**不显示数字**）、键盘 1–4 / 0 / 空格 / R、自动缓慢旋转；`http://` 下可选启用与粒子云实验室同一套 MediaPipe 手势（掌心转视角、开合缩放），`file://` 自动跳过
-- 数据通道：iframe 内 `postMessage({type:'h3:request-data'})` → 主站回推 `h3:data`，**单向注入、iframe 不回写**；独立打开时读 `localStorage`，都没有则显示「示例坐标」。数据变化只推送，塔高用逐帧 lerp 平滑过渡，不重建 iframe
-- 与 3D 实验室双向互链：`hand3d.html` 顶栏「人生模型 ↗」↔ `human3d.html` 顶栏「粒子云实验室」；进入 `#/map` 时背景银河粒子形态也跟着最费劲的象限切换
-- 降级：WebGL 不可用 → 页面内 CSS 平面柱状视图；`prefers-reduced-motion` 静止；后台标签页停帧时改尺寸会强制补一帧，避免空缓冲
+- **象限映射**：`mind → II`、`body → III`、`spirit → I`、`vocation → IV`；横轴个人 ↔ 集体、纵轴外在 ↔ 内在，与领域层的 `QSUB` 文案逐字对应
+- **图纸构成**：4 块象限底色 + 14 条网格线（含 0.5 档细线）+ 2 条带箭头主轴 + 1/2/3 刻度 + 象限编号 I–IV + 轴标题，原点 O 在正中
+- **数据层**：每象限一条 `polyline` 串起知识 / 经验 / 技能三档，12 个 `circle` 数据点各带 `<title>` 文案；未标格用 `empty` 类画半透明点，读数缺口就是缺口
+- **瓶颈与阻塞**：`bottleneck()` 命中的象限加 `hot` 描边；`blockedBy()` 的阻塞关系仍只在文字卡里给出，不画跨象限连线
+- **尺寸与降级**：`viewBox="0 0 420 320"` 配 `preserveAspectRatio`，宽度交给 CSS，窄屏自动缩小；本图无动画，`prefers-reduced-motion` 天然满足
+- **复用**：首屏与导航门卡的缩略图 `quad-mini` 复用同一份 SVG（缩到小尺寸只看方块与折线），保证门卡预览与详情页是同一套刻度语言
 
 ### 16.4 服务端、安全与匿名分布（P1 / P3）
 
@@ -538,7 +556,7 @@ Human 3.0 四象限坐标是**用户自评的定位工具**，同样不构成心
 | 统计 | `GET /api/v1/human3/distribution` 每人只取最新一份，样本 < 5 直接返回 `available:false`（防重识别）；关闭云同步时一并清掉该用户记录 |
 | 隐私 | 默认零上传；`LLM_*` 为空时全流程纯本地；原文与四象限 `notes` 只在 `localStorage`，仅显式 push 才进快照 |
 
-`mappers.js` 新增 `quadrant` / `h3Status` / `h3Phase` 白名单，`health.routes.js` 暴露 `features.human3`，`src/api.js` 封装三个新方法并沿用 401 刷新 / 5xx 重试 / 离线提示。
+`mappers.js` 新增 `quadrant` / `h3Status` / `h3Phase` 白名单，`health.js` 暴露 `features.human3`，`src/app.js` 的 API 分区封装三个新方法并沿用 401 刷新 / 5xx 重试 / 离线提示。
 
 ### 16.5 验证结果（v8 最终）
 
@@ -546,14 +564,15 @@ Human 3.0 四象限坐标是**用户自评的定位工具**，同样不构成心
 |---|---|
 | 后端 | 语法 **38/38**、单测 **27/27**、冒烟 **34/34**（含 human3 写入、notes 危机复算、快照零丢失、小样本不暴露） |
 | 数据库 | `db:migrate up` 执行 001 + 002；`human3_assessments` 12 列、外键 `fk_h3_assess_user_v2` 生效 |
-| 前端实测 | 无头 Chrome：首屏入口可见、`#/map` 4 卡 36 格、标满 12 格 → 瓶颈 `vocation` + 最小剂量生成、3D iframe `THREE=object` / `webgl2:true`、聚焦「使命」、窄屏 canvas 自适应 `318×330`、JS 运行时异常 **0** |
-| 降级 | 全新浏览器无评估数据时 3D 自动切「示例坐标」并给出「去标 →」；`file://` 不发任何请求 |
+| 前端实测 | 无头 Chrome（v8 时）：首屏入口可见、`#/map` 4 卡 36 格、标满 12 格 → 瓶颈 `vocation` + 最小剂量生成、窄屏卡片自适应、JS 运行时异常 **0** |
+| 坐标图 | Node 桩环境加载 `src/human3.js` 直接调用 `quadrantHtml()`，三种输入（12 格填满 / 12 格全未标 / 空 `grid`）均输出 `rect` 4、`line` 14、`path` 2、`text` 17、`polyline` 4、`circle` 12、`<title>` 12、`viewBox="0 0 420 320"`；填满时 `hot` 1 / `empty` 0，全未标时 `empty` 12；`NaN`、`undefined`、第三方嵌入标签命中 **0**，判定 PASS（脚本 `temp/verify_human3.js`） |
+| 降级 | 全新浏览器无评估数据时 12 点全部画成 `empty` 半透明点并给出「去标 →」；`file://` 不发任何请求 |
 
 ### 16.6 新增与修改文件
 
-**新增**：`src/human3.js`、`src/lab/human3d.html`、`server/src/features/human3/{human3.rules,human3.prompt,human3.service,human3.repo,human3.routes}.js`、`server/migrations/002_human3.{up,down}.sql`、`server/tests/human3.test.mjs`、`docs/HUMAN3_DESIGN.md`
+**新增**：`src/human3.js`、`server/src/features/human3/{human3.rules,human3.prompt,human3.service,human3.repo,human3.routes}.js`、`server/migrations/002_human3.{up,down}.sql`、`server/tests/human3.test.mjs`、`docs/HUMAN3_DESIGN.md`
 
-**修改**：`src/index.html`（引入 / `blankDB` / `loadDB` / `VIEWS` / `ROUTES` / `viewTitle` / `onClick` 的 `h3:` 分发 / 首屏入口与复查提醒 / 导航 / `__INNERSPACE_BRIDGE`）、`src/visual.css`（§19）、`src/api.js`、`src/lab/hand3d.html`、`server/src/app.js`、`server/src/features/health/health.routes.js`、`server/src/features/sync/{sync.service,mappers}.js`、`server/src/features/diagnose/diagnose.service.js`（导出复用链路 + 输出硬校验）、`server/scripts/{init-db,smoke}.mjs`、`README.md`
+**修改**：`src/index.html`（引入 / `blankDB` / `loadDB` / `VIEWS` / `ROUTES` / `viewTitle` / `onClick` 的 `h3:` 分发 / 首屏入口与复查提醒 / 导航 / `__INNERSPACE_BRIDGE`）、`src/visual.css`（§19）、`src/api.js`、`server/src/app.js`、`server/src/features/health/health.routes.js`、`server/src/features/sync/{sync.service,mappers}.js`、`server/src/features/diagnose/diagnose.service.js`（导出复用链路 + 输出硬校验）、`server/scripts/{init-db,smoke}.mjs`、`README.md`
 
 **回退**：删 `index.html` 的 `human3.js` 引入与三处路由登记即回到 v7；`DB.human3` 是附加字段，删除后 `loadDB()` 兼容分支不报错。回滚数据库用 `npm run db:migrate -- down --confirm`（会一并删 001 的三张表，慎用）。
 
@@ -573,24 +592,22 @@ Human 3.0 四象限坐标是**用户自评的定位工具**，同样不构成心
 - **同一条路径**叠三遍描边：`WIDTH = [11.0, 4.2, 1.25]` / `GROW = [6.0, 2.2, 0.8]` / `ALPHA = [.055, .14, .55]`，分别是外晕 / 中层 / 细亮芯，是这一束光的截面，不是三条线；三次坐标完全相同、颜色全部纯白。按 14 个年龄桶批量 `stroke()`，低配机也不掉帧。
 - `globalCompositeOperation = 'source-over'`，避免加色叠加把光束糊成白雾；头部只留一颗 1.4px 白点。`#bf-glow` 关闭，蝶身保持清晰轮廓，发光只交给这一条光束。
 
-### 17.2 人生坐标不再单列，全部收进 3D 实验室
+### 17.2 人生坐标独立成导航，门卡收敛为坐标入口
 
-主站删掉独立导航 `data-navx="map"`、Hero 次 CTA `h3:navmap`、首屏 `.h3-entry` 独立卡片，只保留**唯一**一张 `.lab-gate` 门卡，把三件事写在一处：粒子云 · 手势 / 标准四象限坐标统计图 / 12 格自评。右侧缩略图由 `human3ChartMini()` 生成，与 3D 场景共用同一套刻度语言（方格、十字轴、1/2/3 刻度、象限编号、四条粒子折线）。`viewTitle()` 的 `map` 改为「12 格自评」，`human3Reminder()` 文案从「网」改为「坐标图」；`src/human3.js` 的 `#/map` 降级为实验室内的 12 格自评页，顶栏加「去 3D 实验室」。
+v10 把人生坐标从「藏在实验室里」提为一等入口：导航项 `data-navx="map"` 回到主站顶栏，首屏只保留**唯一**一张 `.coord-gate` 坐标门卡（非对称玻璃门卡 + 破格 `COORD` 描边字），三件事写在一处：标准四象限坐标图 / 12 格自评 / 复查提醒。右侧缩略图由 `quadrantHtml()` 派生的小尺寸 SVG 生成（`.quad-mini`），与详情页共用同一套刻度语言：方格、十字轴、1/2/3 刻度、象限编号 I–IV、四条折线。`viewTitle()` 的 `map` 为「12 格自评」，`human3Reminder()` 文案统一为「坐标图」。原独立实验页面与配套启动脚本已整体移出代码库，`#/map` 现在是主站内的自评视图，不再跳转外部页面。
 
 ### 17.3 标准笛卡尔四象限统计图（替换 12 轴蛛网）
 
-`src/lab/web3d.js` 完全重写（639 行），被 `hand3d.html` 与 `human3d.html` 共用：
+本轮把这块可视化整体收敛为主线内联 SVG：改为 `src/human3.js` 的 `quadrantHtml()` 直接拼字符串（详见 §14.6），原独立实验页目录连同 639 行场景脚本一并移除，仓库内不再保留相关资源：
 
 | 项 | 实现 |
 |---|---|
 | 象限映射 | `mind → II`（左上）、`body → III`（左下）、`spirit → I`（右上）、`vocation → IV`（右下）；横轴 `个人 ↔ 集体`，纵轴 `外在 ↔ 内在` |
-| 统计图纸 | `makeChartPaper()` 用 1600×1600 `CanvasTexture` 精确绘制均匀方格、0.5 档次格线、十字主轴 + 箭头、1/2/3 刻度、`O` 原点、轴标题、象限编号、四角括号、顶部图注与底部「这是你自己标的坐标，不是结论」口径 |
-| 粒子拼接 | 8 类 `THREE.Points`：网格点阵 / 主轴点阵 / 数据折线 / 数据点簇 / 折线下面积点阵 / 瓶颈脉冲 / 阻塞·解锁链 / 环境浮尘 |
-| 读数映射 | `computeVerts()` 把 12 格 `1/2/3` 映射为 `DX`/`DY`：x 是象限内三格固定位置，y 是读数（上半区为正、下半区为负），未标的格落在轴上成虚位 |
-| 朝向 | 每帧 `group.quaternion.copy(camera.quaternion)` 做 billboard，刻度文字永远正对相机；**宿主不得再设 `group.rotation.y`**，否则会覆盖 quaternion 把刻度转歪 |
-| 契约 | `window.INNERSCAPE_WEB` 的 `create / localModel / demoModel / Q / T / LABELS / TRAIT_LABELS / COLORS` 与 `applyData / update / focus / clearFocus / pick / labelAnchors / describe / setPixel / status / dispose` 全部保持不变 |
-
-`src/lab/hand3d.html` 顶栏改「人生坐标 · 统计图」并新增「标 12 格」入口（`../index.html#/map`），HUD / 手势 / 诊断文案统一改成「坐标图」；`?mode=web` 深链保持。`src/lab/human3d.html` 标题、brand、`#info`、`#hint` 同步改口径。`file://` 下「摄像头需要本地服务」提示由居中弹窗改为 `body.webmode #notice` 右下角小卡，不再压住图纸中心。
+| 图纸构成 | 4 块 `<rect>` 象限底色 + 14 条 `<line>`（含 0.5 档细线）+ 2 条带箭头 `<path>` 主轴 + 17 条 `<text>`（1/2/3 刻度、轴标题、象限编号 I–IV、图注），`O` 原点居中，根部 `role="img"` |
+| 数据拼接 | 4 条 `<polyline>`（知识 / 经验 / 技能三档连线）+ 12 个 `<circle>` 数据点；未标格落 `empty` 半透明虚位，不补零、不假装有值 |
+| 读数映射 | 每格 `1/2/3` 沿象限内方向线定位，离原点越远档位越高；`bottleneck()` 命中的象限加 `hot` 描边 |
+| 可访问性 | 每个数据点带 `<title>`，悬停显示「象限 · 维度 · 档位文字」；不显示数字、不显示分数、不给结论 |
+| 契约 | `window.HUMAN3.quadrantHtml()` 为纯函数（输入 `{grid, bottleneck}` → 返回字符串）；`refresh()` 只重写 `#h3-quad-host` 的 `innerHTML`，不重建容器、不留监听 |
 
 ### 17.4 流星统一朝向
 
@@ -598,7 +615,7 @@ Human 3.0 四象限坐标是**用户自评的定位工具**，同样不构成心
 
 ### 17.5 视觉编排与响应式修正
 
-`src/visual.css` §20 追加：`--measure` / `--hair` / `--tracking-display` / `--dur-scene` / `--shadow-hair` 令牌；Hero 竖向规则线 + 渐变标题（`@supports` 内启用）+ eyebrow 规则线 + 指标条发丝线；`.lab-gate` 非对称门卡与描边巨型 `LAB` 破格编号；6 组 60ms 错峰入场；论坛瀑布流间距 / 阴影微调；`:focus-visible`、900px / 520px 响应式、`prefers-reduced-motion` 降级。
+`src/visual.css` §20 追加：`--measure` / `--hair` / `--tracking-display` / `--dur-scene` / `--shadow-hair` 令牌；Hero 竖向规则线 + 渐变标题（`@supports` 内启用）+ eyebrow 规则线 + 指标条发丝线；`.coord-gate` 非对称门卡与描边巨型 `COORD` 破格编号；6 组 60ms 错峰入场；论坛瀑布流间距 / 阴影微调；`:focus-visible`、900px / 520px 响应式、`prefers-reduced-motion` 降级。
 
 用 CDP 设备模拟做了 11 档真实视口扫描，修掉两处真实溢出：
 
@@ -613,9 +630,9 @@ Human 3.0 四象限坐标是**用户自评的定位工具**，同样不构成心
 
 | 关卡 | 结果 |
 |---|---|
-| 语法 | 8 个外部 JS 与 `index.html` 内联脚本 `node --check` 全部通过（`index.html` 5816 行 / `visual.css` 1409 行 / `web3d.js` 639 行） |
+| 语法 | 7 个外部 JS 与 `index.html` 内联脚本 `node --check` 全部通过（`index.html` 5798 行 / `visual.css` 1407 行；独立实验页目录已移除） |
 | 尾迹 | 隔离探针截图：一只 30px 纯白小蝶 + **一条**白色柔光光束，无双线、无水波环 |
-| 统计图 | 独立全屏页与 `?mode=web` 实验室页均正常：均匀方格、十字箭头、1/2/3 刻度、I/II/III/IV、四组粒子折线与数据点；实验室提示已移到右下角 |
+| 统计图 | 离线桩验证 `quadrantHtml()`：均方格、十字箭头、1/2/3 刻度、I/II/III/IV、四组折线与 12 个数据点齐全；`NaN` / `undefined` / 第三方嵌入标签命中 **0**；首屏门卡缩略图与详情页同源同刻度 |
 | 论坛 | 1440px 截图确认 3 列瀑布流、8 张卡片；DOM 诊断 `COLS=3 / N=8 / LEFT=209,548,887` |
 | 响应式 | CDP 扫描 320 / 375 / 420 / 520 / 600 / 700 / 768 / 900 / 1024 / 1100 / 1440 全部 `scrollWidth == innerWidth`，无横向溢出 |
 | 降级 | `--force-prefers-reduced-motion=reduce` 实测 `REDUCED=true`、`anim-ok` 未添加 |
@@ -624,10 +641,9 @@ Human 3.0 四象限坐标是**用户自评的定位工具**，同样不构成心
 
 ### 17.7 新增与修改文件
 
-**修改**：`src/index.html`（`drawTrail()` / `.lab-gate` / `human3ChartMini()` / 删独立坐标入口 / `viewTitle()` / `human3Reminder()`）、`src/visual.css`（§20 v10 重排版 + 两处响应式修正）、`src/ambient.js`（`spawnMeteor()`）、`src/human3.js`（`#/map` 降级为实验室内自评页）、`src/lab/web3d.js`（整文件重写）、`src/lab/hand3d.html`、`src/lab/human3d.html`、`README.md`、`REFACTOR.md`
+**修改**：`src/index.html`（`drawTrail()` / `.coord-gate` / `quadrantHtml()` 接入口 / 导航 `data-navx="map"` / `viewTitle()` / `human3Reminder()`）、`src/visual.css`（§20 v10 重排版 + 两处响应式修正 + `svg.h3q` / `.quad-mini`）、`src/ambient.js`（`spawnMeteor()`）、`src/human3.js`（`#/map` 改为主站内自评视图 + `quadrantHtml()` 出图）、`database/schema.sql`（23 → 19 张表）、`README.md`、`REFACTOR.md`、`docs/HUMAN3_DESIGN.md`
 
-**未动**：`database/*`、`server/*`、云端 PostgreSQL 表与 RLS、`src/particles.js`、`src/water.js`、`src/cloud.config.js`
+**未动**：`server/*`、云端 PostgreSQL 表与 RLS、`src/particles.js`、`src/water.js`、`src/cloud.config.js`、`database/views.sql`（生涯域 8 张专业表与 6 个视图按课程设计口径保留）
 
-**回退**：删 `visual.css` §20 即回到 v1.4 视觉层；`web3d.js` 换回上一版蛛网实现并恢复两个宿主的 `group.rotation.y` 即可回到 12 轴雷达图；论坛逻辑与数据边界不受影响。
-
+**回退**：删 `visual.css` §20 即回到 v1.4 视觉层；`human3.js` 用 Git 上一版 `pushFrame` 实现并恢复上一版实验页目录，可回到嵌入式出图（该目录与启动脚本已移入回收站，可还原）；`schema.sql` 用 Git 上一版可恢复被精简的 4 张表。论坛逻辑与数据边界不受影响。
 *（内容由AI生成，仅供参考）*
