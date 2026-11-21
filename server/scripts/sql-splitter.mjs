@@ -1,6 +1,6 @@
 /**
  * 把 MySQL 脚本切成可逐条执行的语句。
- * 需要正确处理 DELIMITER $$ ... $$（procedures.sql / triggers.sql 里的存储过程与触发器），
+ * 需要正确处理 DELIMITER $$ ... $$（init.sql 存储过程与触发器分区里的过程体与触发器体），
  * 同时跳过纯注释行，避免注释里的分号被误判为语句结束。
  */
 export function splitStatements(sql) {
