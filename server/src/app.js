@@ -6,18 +6,18 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 
-import { env } from './config/env.js';
-import { logger } from './shared/logger.js';
-import { requestContext } from './middleware/request-context.js';
-import { errorHandler } from './middleware/error-handler.js';
-import { notFoundHandler } from './shared/http.js';
+import { env } from './core.js';
+import { logger } from './core.js';
+import { requestContext } from './core.js';
+import { errorHandler } from './core.js';
+import { notFoundHandler } from './core.js';
 
-import healthRoutes from './features/health/health.routes.js';
-import authRoutes from './features/auth/auth.routes.js';
-import syncRoutes from './features/sync/sync.routes.js';
-import diagnoseRoutes from './features/diagnose/diagnose.routes.js';
-import forumRoutes from './features/forum/forum.routes.js';
-import human3Routes from './features/human3/human3.routes.js';
+import healthRoutes from './features/health.js';
+import authRoutes from './features/auth.js';
+import syncRoutes from './features/sync.js';
+import diagnoseRoutes from './features/diagnose.js';
+import forumRoutes from './features/forum.js';
+import human3Routes from './features/human3.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(here, '../../src');
