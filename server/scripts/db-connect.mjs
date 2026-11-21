@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import { env } from '../src/config/env.js';
+import { env } from '../src/core.js';
 
 /** 初始化脚本专用：连到服务器（可不指定 database），与运行时连接池分开 */
 export async function connect({ withDatabase = true } = {}) {
