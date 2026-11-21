@@ -1,16 +1,10 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
+import test from 'node:test';
+import { AI_FORBIDDEN, SafetyBlockedError } from '../src/core.js';
+import { CAVEAT, QUADRANTS, archetype, blockedBy, bottleneck, buildHuman3UserPrompt, collectHuman3Texts, filled, human3SystemPrompt, inferPhase, makeDose, readGrid, traitBalance, validateHuman3Snapshot } from '../src/features/human3.js';
+import { mapEnum } from '../src/features/mappers.js';
+import { assertSnapshotSafe, snapshotSchema } from '../src/features/sync.js';
 
-import {
-  readGrid, bottleneck, blockedBy, inferPhase, traitBalance, archetype,
-  makeDose, filled, collectHuman3Texts, validateHuman3Snapshot,
-  QUADRANTS, CAVEAT,
-} from '../src/features/human3/human3.rules.js';
-import { human3SystemPrompt, buildHuman3UserPrompt } from '../src/features/human3/human3.prompt.js';
-import { AI_FORBIDDEN } from '../src/shared/safety.js';
-import { SafetyBlockedError } from '../src/shared/errors.js';
-import { snapshotSchema, assertSnapshotSafe } from '../src/features/sync/sync.service.js';
-import { mapEnum } from '../src/features/sync/mappers.js';
 
 const FULL = {
   mind: { knowledge: 2, experience: 1, skill: 2 },
