@@ -1,4 +1,4 @@
-import { env } from '../src/config/env.js';
+import { env } from '../src/core.js';
 
 /** 启动冒烟：先起服务（npm start），再运行 npm run smoke。 */
 const BASE = process.env.SMOKE_BASE || `http://127.0.0.1:${env.PORT}`;
