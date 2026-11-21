@@ -1,7 +1,6 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
-import { detectCrisis, assertSafe } from '../src/shared/safety.js';
-import { SafetyBlockedError } from '../src/shared/errors.js';
+import test from 'node:test';
+import { SafetyBlockedError, assertSafe, detectCrisis } from '../src/core.js';
 
 test('关键词通道命中自伤表达', () => {
   const r = detectCrisis('最近一直在想自杀这件事');
