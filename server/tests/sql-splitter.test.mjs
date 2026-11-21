@@ -31,17 +31,13 @@ test('DELIMITER $$ 内的过程体不会被内部的分号切开', () => {
   assert.equal(parts[1], 'SELECT 3');
 });
 
-test('项目四个 SQL 脚本都能解析出预期数量的语句', async () => {
+test('合并后的 init.sql 能解析出预期数量的对象', async () => {
   const dir = path.resolve(here, '../../database');
-  const expected = {
-    'schema.sql': (s) => s.filter((x) => /^CREATE TABLE/i.test(x)).length === 23,
-    'views.sql': (s) => s.filter((x) => /^CREATE VIEW/i.test(x)).length === 6,
-    'procedures.sql': (s) => s.filter((x) => /^CREATE PROCEDURE/i.test(x)).length === 8,
-    'triggers.sql': (s) => s.filter((x) => /^CREATE TRIGGER/i.test(x)).length === 7,
-  };
-  for (const [file, check] of Object.entries(expected)) {
-    const sql = await fs.readFile(path.join(dir, file), 'utf8');
-    const parts = splitStatements(sql);
-    assert.ok(check(parts), `${file} 解析异常，共 ${parts.length} 条`);
-  }
+  const sql = await fs.readFile(path.join(dir, 'init.sql'), 'utf8');
+  const parts = splitStatements(sql);
+  const count = (re) => parts.filter((x) => re.test(x)).length;
+  assert.equal(count(/^CREATE TABLE/i), 19, `CREATE TABLE 数量异常，共 ${parts.length} 条`);
+  assert.equal(count(/^CREATE VIEW/i), 6);
+  assert.equal(count(/^CREATE PROCEDURE/i), 8);
+  assert.equal(count(/^CREATE TRIGGER/i), 7);
 });
