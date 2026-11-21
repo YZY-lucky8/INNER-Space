@@ -5,18 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <title>卡点 · 先搞清楚卡在哪</title>
-<!-- API 客户端：离线优先，默认不发请求；云同步与 AI 代理需用户显式开启 -->
-<script src="api.js"></script>
-<!-- v6 · WebGL 3D 银河粒子引擎（零外部依赖；WebGL 不可用时自动回退旧 2D 层） -->
-<script src="particles.js"></script>
-<!-- v6 · 水面涟漪：点击折射波列，替代旧版扩散光圈（零外部依赖，失败自动降级 2D） -->
-<script src="water.js"></script>
-<!-- v6 · 星夜氛围：水波事件派发 / 流星 / 星野 / 萤火光尘（零外部依赖） -->
-<script src="ambient.js"></script>
-<!-- Human 3.0 · 四象限坐标领域层 + #/map 视图（确定性规则，零 LLM） -->
-<script src="human3.js"></script>
-<!-- 论坛云服务：公开配置 + 官方 SDK（单文件 HTML 走 CDN 全局形式） -->
-<script src="cloud.config.js"></script>
+<!-- 前端脚本：cloud.config + api + particles + water + ambient + human3 已按原顺序合并为 app.js
+     （离线优先、默认不发请求；各分区经 window 上的约定名通信，详见 app.js 文件头） -->
+<script src="app.js"></script>
+<!-- 论坛云服务：官方 SDK（单文件 HTML 走 CDN 全局形式） -->
 <script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
 <style>
 :root{
@@ -600,21 +592,6 @@ body.anim-ok .reveal.in{opacity:1;transform:none;transition:opacity .58s ease,tr
 }
 @keyframes cardSweep{to{transform:translateX(110%)}}
 .card.fx-pop{transform:scale(.994)}
-/* 首页 3D 实验室入口（点状追加） */
-.lab-entry{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;
-  background:linear-gradient(115deg,rgba(95,220,171,.14),rgba(95,220,171,.04) 46%,rgba(255,255,255,.03));
-  border-color:rgba(95,220,171,.34);overflow:hidden}
-.lab-entry .lab-entry-copy{flex:1 1 auto;min-width:0}
-.lab-entry .lab-entry-t{font-size:15px;font-weight:620;margin-top:6px;letter-spacing:-.01em}
-.lab-entry .lab-entry-go{flex:0 0 auto;font-size:12.5px;color:#06231a;font-weight:640;
-  background:linear-gradient(180deg,#9ff0ce,#4ec49a);padding:8px 13px;border-radius:999px;white-space:nowrap;
-  transition:transform .18s ease,box-shadow .18s ease}
-.lab-entry:hover .lab-entry-go{transform:translateX(3px);box-shadow:0 8px 22px rgba(95,220,171,.34)}
-.lab-entry .lab-orbit{position:absolute;right:-34px;top:-34px;width:120px;height:120px;border-radius:50%;
-  border:1px solid rgba(95,220,171,.22);pointer-events:none}
-.lab-entry .lab-orbit::after{content:"";position:absolute;inset:16px;border-radius:50%;
-  border:1px dashed rgba(95,220,171,.18);animation:labSpin 16s linear infinite}
-@keyframes labSpin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
 /* =========================================================
@@ -1062,7 +1039,7 @@ input:focus,textarea:focus,.fm-input:focus,.auth-input:focus{
     <button type="button" class="nav-link" data-navx="evidence">我的证据</button>
     <button type="button" class="nav-link" data-navx="forum">经验分享</button>
     <button type="button" class="nav-link" data-navx="direction">方向</button>
-    <a class="nav-link" href="./lab/hand3d.html" target="_blank" rel="noopener">3D 实验室</a>
+    <button type="button" class="nav-link" data-navx="map">人生坐标</button>
   </div>
   <div class="nav-me">
     <span class="nav-avatar" id="nav-avatar">卡</span>
@@ -1775,7 +1752,7 @@ function callAI(input, ruleOut){
   };
   var api = window.INNERSPACE_API;
   if(!api || !api.isEnabled() || !api.features().ai) return Promise.reject(new Error('no_endpoint'));
-  /* api.js 已统一处理 401 刷新、5xx 重试、离线提示与错误文案映射 */
+  /* app.js 的 API 分区已统一处理 401 刷新、5xx 重试、离线提示与错误文案映射 */
   return api.diagnose(body);
 }
 
@@ -2486,7 +2463,7 @@ function moodView(){
     var it = MOOD.items[i];
     var cta = (i===0) ? '<button class="mood-cta" data-act="start">说清楚卡在哪 →</button>'
             : (i===1) ? '<button class="mood-cta" data-act="nav" data-to="forum">看看别人怎么绕出来的 →</button>'
-            : '<a class="mood-cta" href="lab/hand3d.html">去实验室摊开看看 →</a>';
+            : '<button class="mood-cta" data-act="nav" data-to="map">看看自己的人生坐标 →</button>';
     h += '<div class="mood-slide m' + i + (i===MOOD.idx?' on':'') +
          '" style="background-image:url(' + it.img + ')">';
     h += '<div class="mood-copy"><span class="mood-no">' + it.no + '</span>' +
@@ -2583,16 +2560,15 @@ function human3Reminder(){
     if(!key) return '';
     return '<div class="card accent mt16 h3-remind"><span class="step-label">人生坐标 · ' + label + '</span>' +
       '<h3 class="mt8">回头看看坐标挪了没有</h3>' +
-      '<p class="small mt8">「' + esc(d.action) + '」做了一段时间了。重标一次 12 格，到 3D 实验室的坐标图里看看点往哪边挪了。</p>' +
+      '<p class="small mt8">「' + esc(d.action) + '」做了一段时间了。重标一次 12 格，到人生坐标的四象限图里看看点往哪边挪了。</p>' +
       '<div class="btn-row mt12"><button class="btn primary" data-act="h3:navmap">去重标一次 →</button>' +
       '<button class="btn quiet" data-act="h3:remind" data-key="' + key + '">知道了</button></div></div>';
   }catch(e){ return ''; }
 }
 
-/* 实验室门卡的缩略预览：与 3D 实验室画的是同一张「标准笛卡尔四象限统计图」。
+/* 坐标门卡的缩略预览：与 #/map 视图里那张「标准笛卡尔四象限统计图」同一套刻度语言。
    x = 个人 ← → 集体，y = 外在 ← → 内在；左上心智 / 右上精神 / 左下身体 / 右下使命。
-   均匀方格、十字主轴与箭头、1–3 标尺刻度齐全；折线刻意由粒子点阵拼成，
-   和 3D 场景里的 THREE.Points 是同一种语言。纯 SVG，零依赖。 */
+   均匀方格、十字主轴与箭头、1–3 标尺刻度齐全；折线由密集粒子点拼出。纯 SVG，零依赖。 */
 function human3ChartMini(){
   var cx = 100, cy = 76, sx = 24, sy = 17, s = '', i, j, k;
   function X(v){ return (cx + v*sx).toFixed(1); }
@@ -2641,7 +2617,7 @@ function human3ChartMini(){
       s += '<circle class="pd '+d.c+'" cx="'+px[j].toFixed(1)+'" cy="'+py[j].toFixed(1)+'" r="2.3"/>';
     }
   }
-  return '<svg class="lab-chart-mini" viewBox="0 0 200 152" xmlns="http://www.w3.org/2000/svg" ' +
+  return '<svg class="quad-mini" viewBox="0 0 200 152" xmlns="http://www.w3.org/2000/svg" ' +
          'role="img" aria-label="标准四象限坐标统计图缩略">' + s + '</svg>';
 }
 
@@ -2674,23 +2650,21 @@ function renderLanding(){
   /* 复查到点的一次性提醒仍在；它不是独立入口，只提醒回访 */
   h += human3Reminder();
 
-  /* v10 重排：人生坐标不再单独列成一个板块，全部收进唯一的「3D 实验室」入口。
-     主站只剩这一张实验室门卡：粒子云 / 标准四象限坐标统计图 / 12 格自评 都在这里。
-     右侧用同一张标准笛卡尔统计图做缩略预览，构成非对称的破格版面。 */
-  h += '<section class="lab-gate reveal" aria-labelledby="lab-gate-t">' +
-       '<div class="lab-gate-copy">' +
-       '<div class="eyebrow"><i></i>3D 实验室 · 一处完成</div>' +
-       '<h2 id="lab-gate-t" class="lab-gate-t">把手摊开，<br>看看卡点长什么样</h2>' +
-       '<p class="lab-gate-sub">手势控制粒子云，也在同一张标准四象限坐标图里看见自己标的 12 格。' +
-       '两件事在一个实验室里完成，不用再来回找入口。</p>' +
-       '<div class="lab-gate-chips">' +
-       '<span>01 &nbsp;粒子云 · 手势</span><span>02 &nbsp;四象限坐标统计图</span><span>03 &nbsp;12 格自评</span>' +
+  /* 首页唯一的坐标入口：把 12 格自评收进一张门卡，右侧用同一张统计图做缩略预览 */
+  h += '<section class="coord-gate reveal" aria-labelledby="coord-gate-t">' +
+       '<div class="coord-gate-copy">' +
+       '<div class="eyebrow"><i></i>人生坐标 · 一处完成</div>' +
+       '<h2 id="coord-gate-t" class="coord-gate-t">把此刻摊开，<br>看看卡点长什么样</h2>' +
+       '<p class="coord-gate-sub">心智 / 身体 / 精神 / 使命各标三格，12 个读数画进同一张标准四象限坐标图，' +
+       '最费劲的那一块一眼就能看见，顺着它给一个 7 天能做的小实验。</p>' +
+       '<div class="coord-gate-chips">' +
+       '<span>01 &nbsp;四象限坐标统计图</span><span>02 &nbsp;12 格自评</span><span>03 &nbsp;一个能做的实验</span>' +
        '</div>' +
-       '<div class="lab-gate-acts">' +
-       '<a class="btn primary" href="lab/hand3d.html">进入 3D 实验室 <span class="btn-arrow">→</span></a>' +
-       '<a class="btn ghost-btn" href="lab/hand3d.html?mode=web">直接看坐标图</a>' +
+       '<div class="coord-gate-acts">' +
+       '<button class="btn primary" data-act="nav" data-to="map">去标 12 格 <span class="btn-arrow">→</span></button>' +
+       '<button class="btn ghost-btn" data-act="nav" data-to="map">看坐标图</button>' +
        '</div></div>' +
-       '<div class="lab-gate-visual" aria-hidden="true">' + human3ChartMini() + '</div>' +
+       '<div class="coord-gate-visual" aria-hidden="true">' + human3ChartMini() + '</div>' +
        '</section>';
 
   h += moodView();
@@ -4780,7 +4754,7 @@ function cloudInit(){
     return;
   }
   if(!cfg || !cfg.endpoint || !cfg.publishableKey){
-    CLOUD_ERR = '缺少云服务公开配置（cloud.config.js）。';
+    CLOUD_ERR = '缺少云服务公开配置（app.js 的云配置分区）。';
     return;
   }
   try{
@@ -5766,7 +5740,7 @@ render();
 decoInit();
 navPaint();
 
-/* 供 api.js 的云同步面板读写本机 DB。
+/* 供 app.js 云同步面板读写本机 DB。
    只暴露读写方法，不暴露存储键，也不会被自动调用 —— 上传必须由用户点击触发。 */
 window.__INNERSPACE_BRIDGE = {
   getDB: function(){ return DB; },
