@@ -1,9 +1,6 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  mapQ5, mapConfidence, mapStatus, mapOutcome, mapNextAction,
-  mapEvidenceType, mapEngine, toDatetime, jsonOr, enumOrNull,
-} from '../src/features/sync/mappers.js';
+import test from 'node:test';
+import { enumOrNull, jsonOr, mapConfidence, mapEngine, mapEvidenceType, mapNextAction, mapOutcome, mapQ5, mapStatus, toDatetime } from '../src/features/mappers.js';
 
 test('q5 前端 cant 映射为 unreachable，非法值收敛为 null', () => {
   assert.equal(mapQ5('cant'), 'unreachable');
